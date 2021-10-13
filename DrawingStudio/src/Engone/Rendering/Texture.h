@@ -22,8 +22,8 @@ public:
 	void Bind(unsigned int slot = 0) const;
 	void Unbind() const;
 
-	inline int GetWidth();
-	inline int GetHeight();
+	int GetWidth();
+	int GetHeight();
 
 	bool error;
 };

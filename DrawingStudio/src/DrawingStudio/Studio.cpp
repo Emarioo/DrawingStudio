@@ -13,6 +13,9 @@ namespace studio
 	const std::string coloring = {
 #include "../Shaders/color.glsl"
 	};
+	const std::string hue = {
+#include "../Shaders/hue.glsl"
+	};
 
 	// images in the studio
 	static std::vector<Image*> images;
@@ -30,8 +33,10 @@ namespace studio
 		assets::AddFont("consolas", new Font("assets/consolas"));
 		assets::AddShader("basic",new Shader(basic));
 		assets::AddShader("color",new Shader(coloring));
+		assets::AddShader("hue",new Shader(hue));
 		assets::AddTexture("pencil",new Texture("assets/pencil.png"));
 		assets::AddTexture("brush",new Texture("assets/brush.png"));
+		assets::AddTexture("colorMarker",new Texture("assets/colorMarker.png"));
 
 	}
 	float last=0;
@@ -88,55 +93,226 @@ namespace studio
 		public:
 			ColorComp()=default;
 			
-			float r, g, b, a;
+			bool selectedHue = false;
+			bool selectedFade = false;
+			bool selectedAlpha = false;
+
+			// hue is a decimal from 0 to 1
+			void Hue(float hue,float* rgb)
+			{
+				hue *= 6;
+
+				if (hue <= 1) {
+					rgb[0] = 1;
+					rgb[1] = hue;
+					rgb[2] = 0;
+				}
+				else if (hue <= 2) {
+					rgb[0] = 2-hue;
+					rgb[1] = 1;
+					rgb[2] = 0;
+				}
+				else if (hue <= 3) {
+					rgb[0] = 0;
+					rgb[1] = 1;
+					rgb[2] = hue-2;
+				}
+				else if (hue <= 4) {
+					rgb[0] = 0;
+					rgb[1] = 4-hue;
+					rgb[2] = 1;
+				}
+				else if (hue <= 5) {
+					rgb[0] = hue-4;
+					rgb[1] = 0;
+					rgb[2] = 1;
+				}
+				else if (hue <= 6) {
+					rgb[0] = 1;
+					rgb[1] = 0;
+					rgb[2] = 6-hue;
+				}
+				/*
+				rgb[0] = (1 + (rgb[0]-1) * saturation) * value;
+				rgb[1] = (1 + (rgb[1]-1) * saturation) * value;
+				rgb[2] = (1 + (rgb[2]-1) * saturation) * value;
+				*/
+			}
+
+			float hue = 0;
+			float saturation = 0;
+			float value = 0;
+			float alpha = 0;
 			void Init()
 			{
 				float vert[]{
-					0,0,1,1,1,1,
-					1,0,1,1,1,1,
-					1,1,0,0,0,1,
-					0,1,0,0,0,1
+					0,0,//1,0,0,1,
+					1,0,//1,1,1,1,
+					1,1,//0,0,0,1,
+					0,1,//0,0,0,1
 				};
 				unsigned int index[]{
 					0,1,2,
 					2,3,0
 				};
-				buffer.Init(true,vert,4*6,index,6);
-				buffer.SetAttrib(0,2,6,0);
-				buffer.SetAttrib(1,4,6,2);
-			}
-			void SetColor(float r,float g,float b,float a)
-			{
-				this->r = r;
-				this->g = g;
-				this->b = b;
-				this->a = a;
-				float data[]{
-					0,0,r,g,b,a,
-					1,0,1,1,1,1,
-					1,1,0,0,0,1,
-					0,1,0,0,0,1
-				};
-				buffer.ModifyVertices(0,4*6,data);
+				
+				float hue = 360;
+				float saturation = 0.5;
+				float value = 0.5;
+				float grad = ((int)hue%60) / 60.f;
+				float r, g, b;
+				if (hue<=60) {
+					r = ((1 - saturation) + saturation) * value;
+					g = ((1 - saturation)+grad*saturation)*value;
+					b = ((1-saturation))*value;
+				}
+				else if(hue<=120) {
+					r = ((1 - saturation)+(1-grad)*saturation)*value;
+					g = ((1 - saturation)+saturation) * value;
+					b = ((1 - saturation)) * value;
+				}
+				else if (hue <= 180) {
+					r = ((1 - saturation)) * value;
+					g = ((1 - saturation)+saturation) * value;
+					b = ((1 - saturation)+grad*saturation) * value;
+				}
+				else if (hue <= 240) {
+					r = ((1 - saturation)) * value;
+					g = ((1 - saturation)+(1-grad)*saturation) * value;
+					b = ((1 - saturation)+saturation) * value;
+				}
+				else if (hue <= 300) {
+					r = ((1 - saturation)+grad*saturation) * value;
+					g = ((1 - saturation)) * value;
+					b = ((1 - saturation)+saturation) * value;
+				}
+				else if (hue <= 360) {
+					r = ((1 - saturation)+saturation) * value;
+					g = ((1 - saturation)) * value;
+					b = ((1 - saturation)+(1-grad)*saturation) * value;
+				}
+				colorBuffer.Init(true, vert, 4 * 2, index, 6);
+				colorBuffer.SetAttrib(0, 2, 2, 0);
 			}
 			virtual void Event(input::Event& e) override
 			{
-				
+				if (e.eventType == input::EventType::Click&&e.button == GLFW_MOUSE_BUTTON_1 && e.action == 0) {
+					selectedHue = false;
+					selectedFade= false;
+					selectedAlpha = false;
+				}
+				if (panel->Inside(e.mx,e.my)) {
+					if (fadeX<e.mx&&e.mx<fadeX+fadeW) {
+						if (fadeY < e.my && e.my<fadeY+fadeH) {
+							if (e.eventType==input::EventType::Click&&e.button == GLFW_MOUSE_BUTTON_1 && e.action == 1) {
+								selectedFade = true;
+							}
+						}
+						else if (hueY < e.my && e.my<hueY+hueH) {
+							if (e.eventType == input::EventType::Click&&e.button == GLFW_MOUSE_BUTTON_1 && e.action == 1) {
+								selectedHue = true;
+							}
+						}
+						else if (alphaY< e.my && e.my < alphaY+alphaH) {
+							if (e.eventType == input::EventType::Click && e.button == GLFW_MOUSE_BUTTON_1 && e.action == 1) {
+								selectedAlpha = true;
+							}
+						}
+					}
+				}
+				if (selectedFade) {
+					saturation = 1-(e.mx - fadeX) / (fadeW);
+					value = 1-(e.my - fadeY) / (fadeH);
+					if (saturation < 0)
+						saturation = 0;
+					if (saturation > 1) {
+						saturation = 1;
+					}
+					if (value < 0)
+						value = 0;
+					if (value > 1) {
+						value = 1;
+					}
+				}
+				if (selectedHue) {
+					hue = (e.mx - hueX) / (hueW);
+					if (hue < 0)
+						hue = 0;
+					if (hue > 1) {
+						hue = 1;
+					}
+				}
+				if (selectedAlpha) {
+					alpha = (e.mx - alphaX) / (alphaW);
+					if (alpha < 0)
+						alpha = 0;
+					if (alpha > 1) {
+						alpha = 1;
+					}
+				}
 			}
 			virtual void Render() override
 			{
+				fadeX = panel->renderX+5;
+				fadeY = panel->renderY+5;
+				fadeW = panel->renderW-10;
+				fadeH = panel->renderH-50;
+				hueX = fadeX;
+				hueY = fadeY + fadeH;
+				hueW = fadeW;
+				hueH = 20;
+				alphaX = fadeX;
+				alphaY = hueY + hueH;
+				alphaW = fadeW;
+				alphaH = 20;
 				Shader* shad = assets::GetShader("color");
 				shad->Bind();
-				shad->SetVec2("uPos", {panel->renderX+5,panel->renderY+5});
-				shad->SetVec2("uSize", {panel->renderW-10,panel->renderW-10});
-				shad->SetVec2("uWindow", {winW,winH});
+				shad->SetVec2("uPos", {fadeX,fadeY});
+				shad->SetVec2("uSize", { fadeW,fadeY});
+				shad->SetVec2("uWindow", { winW,winH });
+				float f[3];
+				Hue(hue,f);
+				shad->SetVec3("uColor", { f[0],f[1],f[2]});
+				shad->SetInt("uShaderType", 0);
+				colorBuffer.Draw();
 
-				buffer.Draw();
+				//shad = assets::GetShader("hue");
+				//shad->Bind();
+				shad->SetVec2("uPos", { hueX,hueY});
+				shad->SetVec2("uSize", { hueW, hueH });
+				shad->SetInt("uShaderType", 1);
+				//shad->SetVec2("uWindow", { winW,winH });
+				colorBuffer.Draw();
+
+				shad->SetVec2("uPos", { alphaX,alphaY});
+				shad->SetVec2("uSize", { alphaW,alphaH});
+				shad->SetInt("uShaderType", 2);
+				//shad->SetVec2("uWindow", { winW,winH });
+				colorBuffer.Draw();
 
 				overlay::GetShader().Bind();
+
+				assets::GetTexture("colorMarker")->Bind();
+				int w = assets::GetTexture("colorMarker")->GetWidth();
+				int h = assets::GetTexture("colorMarker")->GetHeight();
+				overlay::GetShader().SetInt("uTextured", 1);
+				overlay::GetShader().SetVec2("uSize", {w,h});
+				overlay::GetShader().SetVec4("uColor", 1,1,1,1);
+
+				overlay::GetShader().SetVec2("uPos", {fadeX+fadeW*(1-saturation)-w/2,fadeY+fadeH*(1-value)-w/2});
+				renderer::DrawRect();
+
+				overlay::GetShader().SetVec2("uPos", { hueX+ hueW * hue-w/2,hueY + hueH/2-h/2 });
+				renderer::DrawRect();
+
+				overlay::GetShader().SetVec2("uPos", { alphaX + alphaW * alpha - w / 2,alphaY + alphaH / 2 - h / 2 });
+				renderer::DrawRect();
 			}
 		private:
-			TriangleBuffer buffer;
+			TriangleBuffer colorBuffer;
+			float fadeX, fadeY, fadeW, fadeH;
+			float hueX, hueY, hueW, hueH;
+			float alphaX, alphaY, alphaW, alphaH;
 		};
 		ColorComp* colorComp = new ColorComp();
 		colorComp->Init();
