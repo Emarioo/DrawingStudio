@@ -2,6 +2,8 @@
 
 #include "Objects/Layer.h"
 
+#include "History.h"
+
 namespace tools
 {
 	enum Tool
@@ -11,11 +13,13 @@ namespace tools
 	};
 	void SetTool(Tool tool);
 	Tool GetTool();
-	void UseTool(Layer* layer, int x, int y);
-	void DragTool(Layer* layer, int fromX, int fromY, int toX, int toY);
-	void Brush(Layer* layer, int x,int y);
-	void DragBrush(Layer* layer, int fromX,int fromY,int toX,int toY);
-	void Pencil(Layer* layer, int x,int y);
-	void DragPencil(Layer* layer, int fromX, int fromY, int toX, int toY);
-	void Line(Layer* layer, int fromX, int fromY, int toX, int toY);
+	void SetColor(float r, float g, float b, float a);
+	void SetSize(float size);
+	void UseTool(Layer* layer, float x, float y);
+	void DragTool(Layer* layer, float fromX, float fromY, float toX, float toY);
+	void Brush(Layer* layer, float x, float y);
+	void DragBrush(Layer* layer, float fromX, float fromY, float toX, float toY);
+	void Pencil(Layer* layer, int x, int y);
+	void DragPencil(Layer* layer, float fromX, float fromY, float toX, float toY);
+	void Line(Layer* layer, float fromX, float fromY, float toX, float toY);
 }

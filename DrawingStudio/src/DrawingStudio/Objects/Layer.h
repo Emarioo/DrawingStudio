@@ -43,6 +43,15 @@ public:
 		texture = new Texture();
 		texture->Init(width, height, data);
 	}
+	void Set(int x,int y,unsigned char red,unsigned char green,unsigned char blue, unsigned alpha)
+	{
+		int index = y*width + x;
+		data[index * 4] = red;
+		data[index * 4 + 1] = green;
+		data[index * 4 + 2] = blue;
+		data[index * 4 + 3] = alpha;
+		needRefresh = true;
+	}
 	void Refresh()
 	{
 		if(data!=nullptr)

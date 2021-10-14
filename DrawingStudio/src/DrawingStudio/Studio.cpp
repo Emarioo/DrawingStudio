@@ -13,9 +13,6 @@ namespace studio
 	const std::string coloring = {
 #include "../Shaders/color.glsl"
 	};
-	const std::string hue = {
-#include "../Shaders/hue.glsl"
-	};
 
 	// images in the studio
 	static std::vector<Image*> images;
@@ -33,7 +30,6 @@ namespace studio
 		assets::AddFont("consolas", new Font("assets/consolas"));
 		assets::AddShader("basic",new Shader(basic));
 		assets::AddShader("color",new Shader(coloring));
-		assets::AddShader("hue",new Shader(hue));
 		assets::AddTexture("pencil",new Texture("assets/pencil.png"));
 		assets::AddTexture("brush",new Texture("assets/brush.png"));
 		assets::AddTexture("colorMarker",new Texture("assets/colorMarker.png"));
@@ -58,15 +54,15 @@ namespace studio
 
 		glfwSwapBuffers(renderer::GetWindow());
 	}
-	int lastDrawX = -1;
-	int lastDrawY = -1;
+	float lastDrawX = -1, lastDrawY = -1;
 	void Init()
 	{
 		InitAssets();
+		history::Init();
 
 		using namespace overlay;
 		Panel* filePanel = new Panel();
-		filePanel->x.Left(2)->y.Top(2)->w.Center(60)->h.Center(25);
+		filePanel->x.Left(0)->y.Top(0)->w.Center(60)->h.Center(25);
 		filePanel->color = { 1.f,1.f,1.f,1.f };
 		Transition& t = filePanel->AddTransition("a");
 		t.eventType = input::EventType::Move;
@@ -75,10 +71,15 @@ namespace studio
 		AddPanel(filePanel);
 
 		Panel* toolPanel = new Panel();
-		toolPanel->x.Right(2)->y.Center(0)->w.Center(40)->h.Center(200);
+		toolPanel->x.Right(0)->y.Center(0)->w.Center(40)->h.Center(200);
 		toolPanel->color = { .8f,0.9f,0.9f };
 		Grid* grid = new Grid(1, 0, [](int index,input::Event& e) {
-
+			if (index == 0) {
+				tools::SetTool(tools::ToolPencil);
+			}else if (index == 1) {
+				tools::SetTool(tools::ToolBrush);
+			}
+			return false;
 			});
 		grid->AddItem(assets::GetTexture("pencil"));
 		grid->AddItem(assets::GetTexture("brush"));
@@ -86,7 +87,7 @@ namespace studio
 		AddPanel(toolPanel);
 
 		Panel* colorPanel = new Panel();
-		colorPanel->x.Left(50)->y.Center(0)->w.Center(200)->h.Center(200);
+		colorPanel->x.Left(0)->y.Bottom(0)->w.Center(200)->h.Center(200);
 		colorPanel->color = { .8f,0.9f,0.9f };
 		class ColorComp : public Component
 		{
@@ -98,10 +99,9 @@ namespace studio
 			bool selectedAlpha = false;
 
 			// hue is a decimal from 0 to 1
-			void Hue(float hue,float* rgb)
+			void Hue(float* rgb,float hue,float saturation=1, float value=1)
 			{
 				hue *= 6;
-
 				if (hue <= 1) {
 					rgb[0] = 1;
 					rgb[1] = hue;
@@ -132,17 +132,16 @@ namespace studio
 					rgb[1] = 0;
 					rgb[2] = 6-hue;
 				}
-				/*
+				
 				rgb[0] = (1 + (rgb[0]-1) * saturation) * value;
 				rgb[1] = (1 + (rgb[1]-1) * saturation) * value;
 				rgb[2] = (1 + (rgb[2]-1) * saturation) * value;
-				*/
 			}
 
 			float hue = 0;
-			float saturation = 0;
+			float saturation = 1;
 			float value = 0;
-			float alpha = 0;
+			float alpha = 1;
 			void Init()
 			{
 				float vert[]{
@@ -155,46 +154,10 @@ namespace studio
 					0,1,2,
 					2,3,0
 				};
-				
-				float hue = 360;
-				float saturation = 0.5;
-				float value = 0.5;
-				float grad = ((int)hue%60) / 60.f;
-				float r, g, b;
-				if (hue<=60) {
-					r = ((1 - saturation) + saturation) * value;
-					g = ((1 - saturation)+grad*saturation)*value;
-					b = ((1-saturation))*value;
-				}
-				else if(hue<=120) {
-					r = ((1 - saturation)+(1-grad)*saturation)*value;
-					g = ((1 - saturation)+saturation) * value;
-					b = ((1 - saturation)) * value;
-				}
-				else if (hue <= 180) {
-					r = ((1 - saturation)) * value;
-					g = ((1 - saturation)+saturation) * value;
-					b = ((1 - saturation)+grad*saturation) * value;
-				}
-				else if (hue <= 240) {
-					r = ((1 - saturation)) * value;
-					g = ((1 - saturation)+(1-grad)*saturation) * value;
-					b = ((1 - saturation)+saturation) * value;
-				}
-				else if (hue <= 300) {
-					r = ((1 - saturation)+grad*saturation) * value;
-					g = ((1 - saturation)) * value;
-					b = ((1 - saturation)+saturation) * value;
-				}
-				else if (hue <= 360) {
-					r = ((1 - saturation)+saturation) * value;
-					g = ((1 - saturation)) * value;
-					b = ((1 - saturation)+(1-grad)*saturation) * value;
-				}
 				colorBuffer.Init(true, vert, 4 * 2, index, 6);
 				colorBuffer.SetAttrib(0, 2, 2, 0);
 			}
-			virtual void Event(input::Event& e) override
+			virtual bool Event(input::Event& e) override
 			{
 				if (e.eventType == input::EventType::Click&&e.button == GLFW_MOUSE_BUTTON_1 && e.action == 0) {
 					selectedHue = false;
@@ -250,6 +213,13 @@ namespace studio
 						alpha = 1;
 					}
 				}
+				if (selectedFade || selectedHue || selectedAlpha) {
+					float f[3];
+					Hue(f, hue, saturation, value);
+					tools::SetColor(f[0], f[1], f[2], alpha);
+					return true;
+				}
+				return false;
 			}
 			virtual void Render() override
 			{
@@ -268,10 +238,10 @@ namespace studio
 				Shader* shad = assets::GetShader("color");
 				shad->Bind();
 				shad->SetVec2("uPos", {fadeX,fadeY});
-				shad->SetVec2("uSize", { fadeW,fadeY});
+				shad->SetVec2("uSize", { fadeW,fadeH});
 				shad->SetVec2("uWindow", { winW,winH });
 				float f[3];
-				Hue(hue,f);
+				Hue(f,hue);
 				shad->SetVec3("uColor", { f[0],f[1],f[2]});
 				shad->SetInt("uShaderType", 0);
 				colorBuffer.Draw();
@@ -319,7 +289,7 @@ namespace studio
 		colorPanel->AddComponent(colorComp);
 		AddPanel(colorPanel);
 
-		input::AddListener(new input::Listener(input::EventType::Key, [=](input::Event& e) {
+		input::AddListener(new input::Listener(input::EventType::Key,-10, [=](input::Event& e) {
 			if (e.action==1) {
 				if (e.key==GLFW_KEY_P) {
 					tools::SetTool(tools::ToolPencil);
@@ -330,7 +300,7 @@ namespace studio
 			}
 			return false;
 			}));
-		input::AddListener(new input::Listener(input::EventType::Click | input::EventType::Move | input::EventType::Scroll, [=](input::Event& e) {
+		input::AddListener(new input::Listener(input::EventType::Click | input::EventType::Move | input::EventType::Scroll,-10, [=](input::Event& e) {
 			//std::cout << e.mx << " " << e.my << " " << e.action << " " << e.button << "\n";
 
 			//std::cout << (int)e.eventType <<" " << (e.eventType == input::EventType::Scroll) << " \n";
@@ -342,8 +312,8 @@ namespace studio
 						selectedImage = nullptr;
 						for (int i = 0; i < images.size(); i++) {
 							Image* image = images[i];
-							int tx = ((float)e.mx - winW / 2) / zoom + image->width / 2 - offsetX - image->x;
-							int ty = (winH / 2 - (float)e.my) / zoom + image->height / 2 - offsetY - image->y;
+							float tx = ((float)e.mx - winW / 2) / zoom + image->width / 2 - offsetX - image->x;
+							float ty = (winH / 2 - (float)e.my) / zoom + image->height / 2 - offsetY - image->y;
 							
 							//std::cout << tx << " " << ty << "\n";
 							if (tx > 0 && tx < image->width && ty>0 && ty < image->height) {
@@ -371,22 +341,24 @@ namespace studio
 					Layer* layer= selectedImage->selectedLayer;
 					if (selectedImage->selectedLayer != nullptr) {
 						if (layer->data != nullptr) {
-							int tx = ((float)e.mx - winW / 2) / zoom + layer->width / 2 - offsetX- selectedImage->x;
-							int ty = (winH / 2 - (float)e.my) / zoom + layer->height / 2 - offsetY- selectedImage->y;
-							if (tx > 0 && tx < layer->width && ty>0 && ty < layer->height) {
+							float tx = ((float)e.mx - winW / 2) / zoom + layer->width / 2 - offsetX- selectedImage->x;
+							float ty = (winH / 2 - (float)e.my) / zoom + layer->height / 2 - offsetY- selectedImage->y;
+							//if (tx > 0 && tx < layer->width && ty>0 && ty < layer->height) {
 
 								/*
 								if (lastDrawX == -1) {
 									lastDrawX = tx;
 									lastDrawY = ty;
 								}*/
+							//std::cout << "Draw\n";
 								tools::DragTool(layer,lastDrawX,lastDrawY,tx,ty);
+							//std::cout << "stop\n";
 
 								//tools::DragBrush(layer,lastDrawX,lastDrawY, tx, ty);
 								
 								lastDrawX = tx;
 								lastDrawY = ty;
-							}
+							//}
 						}
 					}
 				}

@@ -36,6 +36,9 @@
     <ClCompile Include="src\DrawingStudio\Tools.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\DrawingStudio\History.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Engone\Rendering\Renderer.h">
@@ -78,6 +81,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\DrawingStudio\Tools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DrawingStudio\History.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

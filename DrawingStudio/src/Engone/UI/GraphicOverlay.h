@@ -800,7 +800,7 @@ namespace overlay
 
 		virtual void Render() {}
 		virtual void Update() {}
-		virtual void Event(input::Event& e) {}
+		virtual bool Event(input::Event& e) { return false; }
 
 		Panel* panel;
 
@@ -958,10 +958,10 @@ namespace overlay
 			//std::cout << rx << " " << ry << " " << rw << " " << rh << " "<<mx<<" " <<my<<"\n";
 			return mx > renderX && mx<renderX + renderW && my>renderY && my < renderY + renderH;
 		}
-		void Event(input::Event& e)
+		bool Event(input::Event& e)
 		{
 			if (e.eventType == (input::EventType::Click)) {
-				bool inside= Inside(e.mx, e.my);
+				bool inside = Inside(e.mx, e.my);
 				for (int i = 0; i < transitions.size(); i++) {
 					if (transitions[i].eventType == e.eventType) {
 						transitions[i].active = inside;
@@ -969,8 +969,10 @@ namespace overlay
 				}
 			}
 			for (int i = 0; i < components.size(); i++) {
-				components[i]->Event(e);
+				if (components[i]->Event(e))
+					return true;
 			}
+			return false;
 		}
 	protected:
 		//TriangleBuffer buffer;
@@ -982,15 +984,17 @@ namespace overlay
 	{
 	public:
 		Button() : Component() {}
-		Button(std::function<void(input::Event& e)> func) : Component(), run(func) {}
+		Button(std::function<bool(input::Event& e)> func) : Component(), run(func) {}
 
-		std::function<void(input::Event& e)> run;
-		virtual void Event(input::Event& e) override
+		std::function<bool(input::Event& e)> run;
+		virtual bool Event(input::Event& e) override
 		{
 			if (e.eventType == (input::EventType::Click)) {
 				if (panel->Inside(e.mx, e.my) && run != nullptr)
-					run(e);
+					if (run(e))
+						return true;
 			}
+			return false;
 		}
 	};
 	class Text : public Component
@@ -1013,9 +1017,10 @@ namespace overlay
 		bool center=false;
 		float height=0;
 
-		virtual void Event(input::Event& e) override
+		virtual bool Event(input::Event& e) override
 		{
 			// if pressed then select
+			return false;
 		}
 		virtual void Render() override
 		{
@@ -1036,21 +1041,21 @@ namespace overlay
 	{
 	public:
 		Grid(int column, int row) : column(column), row(row) {}
-		Grid(int column, int row,std::function<void(int, input::Event&)> func) : column(column), row(row), run(func) {}
+		Grid(int column, int row,std::function<bool(int, input::Event&)> func) : column(column), row(row), run(func) {}
 
 		std::vector<Texture*> items;
 		int column, row;
-		std::function<void(int,input::Event&)> run;
+		std::function<bool(int,input::Event&)> run;
 
 		void AddItem(Texture* item)
 		{
 			items.push_back(item);
 		}
 
-		virtual void Event(input::Event& e) override
+		virtual bool Event(input::Event& e) override
 		{
 			if (run == nullptr)
-				return;
+				return false;
 			if (panel->Inside(e.mx,e.my)) {
 				if (column != 0) {
 					int size = panel->renderW / column;
@@ -1060,7 +1065,8 @@ namespace overlay
 					int index = iy * column + ix;
 					//std::cout << index << "\n";
 					if (index > -1 && index < items.size()) {
-						run(index,e);
+						if(run(index,e))
+							return true;
 					}
 				}
 				else {
@@ -1071,10 +1077,12 @@ namespace overlay
 					int index = ix * column + iy;
 					//std::cout << index << "\n";
 					if (index > -1 && index < items.size()) {
-						run(index,e);
+						if (run(index, e))
+							return true;
 					}
 				}
 			}
+			return false;
 		}
 		virtual void Render() override
 		{
@@ -1188,7 +1196,8 @@ namespace overlay
 		using namespace input;
 		AddListener(new Listener(EventType::Click | EventType::Move, [](Event& e) {
 			for (int i = 0; i < panels.size();i++) {
-				panels[i]->Event(e);
+				if (panels[i]->Event(e))
+					return true;
 			}
 			return false;
 			}));
