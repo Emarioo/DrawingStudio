@@ -1004,12 +1004,11 @@ namespace overlay
 		Text(const std::string& text, Font* font)
 		: text(text), font(font){}
 		Text(const std::string& text, Font* font, bool centered)
-			: text(text), font(font), center(centered)
-		{
-		}
+			: text(text), font(font), center(centered){}
 		Text(const std::string& text, Font* font, bool centered, float height)
-			: text(text), font(font), center(centered), height(height)
-		{ }
+			: text(text), font(font), center(centered), height(height){ }
+		Text(const std::string& text, Font* font, bool centered, bool editable)
+			: text(text), font(font), center(centered), isEditable(editable) {}
 
 		std::string text;
 		Font* font;
@@ -1019,7 +1018,247 @@ namespace overlay
 
 		virtual bool Event(input::Event& e) override
 		{
-			// if pressed then select
+			if (isEditable) {
+				if (e.eventType == input::EventType::Click) {
+					if (e.action == 1) {
+						if (panel->Inside(e.mx, e.my)) {
+							isEditing = true;
+							return true;
+						}
+						else {
+							return false;
+						}
+					}
+					std::cout << "Edit " << isEditing << "\n";
+				}
+			}
+			if (isEditing) {
+				if(e.eventType==input::EventType::Key) {
+					if (e.key == GLFW_KEY_LEFT_SHIFT) {
+						//elemShiftL = action;
+					}
+					if (e.key == GLFW_KEY_RIGHT_SHIFT) {
+						//elemShiftR = action;
+					}
+					else if (e.key == GLFW_KEY_RIGHT_ALT) {
+						//elemAltR = action;
+					}
+					else if (e.key == GLFW_KEY_UP) {
+						if (e.action==1) {
+							int c = cursorPos;
+							int l = 0;// CharOnLine(c);
+							int newC = -1;
+							//std::cout << "start " << c << " " << l << std::endl;
+
+							for (int i = c; i >= 0; i--) {
+								if (i >= text.length())
+									continue;
+								if (c == i && text.at(c) == '\n')
+									continue;
+								//std::cout << ">" << text.text.at(i) <<" "<<i<< std::endl;
+								if (text.at(i) == '\n') {
+									int o = 0;
+									for (int j = i - 1; j >= 0; j--) {
+										//std::cout <<" >" <<text.text.at(j)<<" "<<j << std::endl;
+										if (text.at(j) == '\n') {
+											o = j + 1;
+											break;
+										}
+										if (j == 0) {
+											o = 0;
+										}
+									}
+									if (o + l > i)
+										newC = i;
+									else
+										newC = o + l;
+									break;
+								}
+							}
+							if (newC < 0) {
+								newC = 0;
+							}
+							//std::cout << "out " << newC << std::endl;
+							cursorPos = newC;
+							/* For uneven width on characters - TODO: Use the closest character instead of the last one
+							int c = text.atChar;
+							int newC = c;
+							float widO = text.PixelPosX(text.atChar);
+							float wid = -1;
+							for (int i = c; i >= 0; i--) {
+								char cha = text.text.at(i);
+								if (cha == '\n') {
+									if (wid > 0) {
+										newC = i;
+										break;
+									}
+									wid = 0;
+									if (i != 0) {
+										for (int j = i-1; j >= 0; j--) {
+											char cha2 = text.text.at(j);
+											if (cha2 == '\n') {
+												break;
+											}
+											wid += text.font->charWid[cha2];
+										}
+									}
+									continue;
+								}
+								if (cha < 0)
+									cha += 256;
+								if (wid >= 0) {
+									wid -= text.font->charWid[cha];
+									//std::cout << cha << " " << i << " " << widO << " < " << wid << std::endl;
+									if (widO > wid) {
+										newC = i;
+										if(text.text.length()>i+1){
+											if (text.text.at(i + 1)=='\n') {
+												newC++;
+											}
+										}
+										break;
+									}
+								}
+							}
+							text.atChar = newC;
+							*/
+						}
+					}
+					else if (e.key == GLFW_KEY_LEFT) {
+						if (e.action==1) {
+							if (cursorPos > 0)
+								cursorPos--;
+						}
+					}
+					else if (e.key == GLFW_KEY_DOWN) {
+						if (e.action==1) {
+							int c = cursorPos;
+							int l = 0;// CharOnLine(c);
+							int newC = -1;
+							int o = 0;
+							//std::cout << "start " << c <<" "<<l<< std::endl;
+
+							for (int i = c; i < text.length(); i++) {
+								char cha = text.at(i);
+								//std::cout << "ch " << cha << std::endl;
+								if (newC >= 0) {
+									if (newC == l) {
+										newC = l + o + 1;
+										//std::cout << "end1 " << newC << std::endl;
+										break;
+									}
+									newC++;
+								}
+								if (cha == '\n') {
+									if (newC >= 0) {
+										if (newC < l + 1) {
+											newC = i;
+											break;
+										}
+										newC += o + 1;
+										//std::cout << "end2 " << newC << std::endl;
+										break;
+									}
+									o = i;
+									newC = 0;
+									continue;
+								}
+								if (i == text.length() - 1) {
+									if (newC < 0) {
+										break;
+									}
+									newC += o + 1;
+								}
+							}
+							if (newC < 0) {
+								newC = text.length();
+							}
+							//std::cout << "out " << newC << std::endl;
+							cursorPos = newC;
+
+							/* characters width different widths
+							int c = text.atChar;
+							int newC = c;
+							float widO = text.PixelPosX(text.atChar);
+							float wid = -1;
+							for (int i = c; i < text.text.length(); i++) {
+								char cha = text.text.at(i);
+								if (cha == '\n') {
+									if (wid > 0) {
+										newC = i;
+										break;
+									}
+									wid = 0;
+									continue;
+								}
+								if (cha < 0)
+									cha += 256;
+								if(wid>=0)
+									wid += text.font->charWid[cha];
+								//std::cout << cha << " " << i << " " << widO << " < " << wid << std::endl;
+								if (widO < wid) {
+									newC = i;
+									break;
+								}
+							}
+							text.atChar = newC;
+							*/
+						}
+					}
+					else if (e.key == GLFW_KEY_RIGHT) {
+						if (e.action==1) {
+							if (cursorPos < text.size())
+								cursorPos++;
+						}
+					}
+					else if (e.key == GLFW_KEY_DELETE) {
+						if (e.action==1) {
+							if (text.size() > 0 && cursorPos < text.size()) {
+								if (cursorPos == 0) {
+									text = text.substr(1);
+								}
+								else {
+									text = text.substr(0, cursorPos) + text.substr(cursorPos + 1);
+								}
+							}
+						}
+					}
+					else if (e.key == GLFW_KEY_BACKSPACE) {
+						if (e.action==1) {
+							if (text.length() > 0 && cursorPos > 0) {
+								if (cursorPos == text.size()) {
+									text = text.substr(0, cursorPos - 1);
+									cursorPos--;
+								}
+								else {
+									text = text.substr(0, cursorPos - 1)+text.substr(cursorPos);
+									cursorPos--;
+								}
+							}
+						}
+					}
+					else if (e.key == GLFW_KEY_ENTER) {
+						if (e.action==1) {
+							//if (text.text.size() < text.maxChar) {
+							text = text.substr(0,cursorPos)+'\n'+text.substr(cursorPos);
+							cursorPos++;
+							//}
+						}
+					}
+					else {
+						if (e.action==1) {
+							char chr = (char)e.scancode;// GetChar(key, elemShiftL || elemShiftR, elemAltR);
+							if (chr != 0) {
+								//if (text.text.size() < text.maxChar) {
+								std::cout << "Hellu! " << chr << "\n";
+								text = text.substr(0, cursorPos) + chr + text.substr(cursorPos);
+								cursorPos++;
+								//}
+							}
+						}
+					}
+				}
+			}
 			return false;
 		}
 		virtual void Render() override
@@ -1035,7 +1274,8 @@ namespace overlay
 				renderer::DrawString(font, text, center, height,panel->renderW, panel->renderH,-1);
 		}
 
-		bool isEditable;
+		int cursorPos=0;
+		bool isEditable,isEditing;
 	};
 	class Grid : public Component
 	{
@@ -1143,11 +1383,11 @@ namespace overlay
 		}
 		else if (side == 1) {
 			if (parent == nullptr) return move;// - panel->renderH;
-			else return parent->renderY - move - panel->renderH;
+			else return parent->renderY + move + parent->renderH;
 		}
 		else {
 			if (parent == nullptr) return renderer::Height() - move - panel->renderH;
-			else return parent->renderY + parent->renderH + move;
+			else return parent->renderY - panel->renderH - move;
 		}
 	}
 	float ConstraintX::Value()

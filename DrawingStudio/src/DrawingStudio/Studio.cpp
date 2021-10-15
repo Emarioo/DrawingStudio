@@ -23,7 +23,7 @@ namespace studio
 	static int lastmx, lastmy;
 
 	static float offsetX = 0, offsetY = 0;
-	static float zoom = 1;
+	static float zoom = 2;
 
 	void InitAssets()
 	{
@@ -57,6 +57,8 @@ namespace studio
 	float lastDrawX = -1, lastDrawY = -1;
 	void Init()
 	{
+		winW = renderer::Width();
+		winH = renderer::Height();
 		InitAssets();
 		history::Init();
 
@@ -289,6 +291,12 @@ namespace studio
 		colorPanel->AddComponent(colorComp);
 		AddPanel(colorPanel);
 
+		Panel* propertyPanel = new Panel();
+		propertyPanel->x.Left(0)->y.Bottom(0,colorPanel)->w.Center(150)->h.Center(60);
+		propertyPanel->color = { .8f,0.9f,0.9f };
+		propertyPanel->AddComponent(new Text("Size: ",assets::GetFont("consolas"),true,true));
+		AddPanel(propertyPanel);
+
 		input::AddListener(new input::Listener(input::EventType::Key,-10, [=](input::Event& e) {
 			if (e.action==1) {
 				if (e.key==GLFW_KEY_P) {
@@ -321,6 +329,7 @@ namespace studio
 								if (image->selectedLayer != nullptr) {
 									lastDrawX = tx;
 									lastDrawY = ty;
+									tools::SetColor(1,0,0,1);
 									tools::UseTool(image->selectedLayer,tx,ty);
 								}
 							}
@@ -351,6 +360,7 @@ namespace studio
 									lastDrawY = ty;
 								}*/
 							//std::cout << "Draw\n";
+							tools::SetColor(0, 0, 0, 1);
 								tools::DragTool(layer,lastDrawX,lastDrawY,tx,ty);
 							//std::cout << "stop\n";
 
@@ -388,6 +398,7 @@ namespace studio
 		image->x = 0;
 		image->Init(200, 200);
 		images.push_back(image);
+
 		/*
 		Image* image1 = new Image();
 		image1->x = 820;

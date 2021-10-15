@@ -35,7 +35,7 @@ namespace renderer
 		if (!glfwInit()) {
 			return nullptr;
 		}
-		window = glfwCreateWindow(500, 500, "Drawing Studio", NULL, NULL);
+		window = glfwCreateWindow(1200, 800, "Drawing Studio", NULL, NULL);
 		if (!window) {
 			glfwTerminate();
 			return nullptr;
