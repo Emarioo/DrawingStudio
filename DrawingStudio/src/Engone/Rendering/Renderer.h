@@ -118,48 +118,67 @@ namespace renderer
 		else {
 			font->texture.Bind();
 		}
+
 		std::vector<std::string> lines;
 		std::vector<float> lineWidths;
 
+		float reachedWidth = 0;
 		float spacing = 0;
 		int lineIndex = 0;
 		std::string word;
 		float wordWidth = 0;
 		lines.push_back("");
 		lineWidths.push_back(0);
-		for (int i = 0; i < text.size(); i++) {
+		for (int i = 0; i < text.length(); i++) {
 			unsigned char chr = text[i];
+			//std::cout << (int)chr << "\n";
 
 			float added = wantedHeight * (font->charWid[chr] / (float)font->charSize);
 			//if (wordWidth != 0 && lineWidths[lineIndex] != 0)
 			added += spacing;
 
+			/*
 			if (wordWidth==0&&lineWidths[lineIndex] == 0 && chr == ' ') {// skip space in the beginning of line
 				continue;
 			}
+			*/
 
-			if (chr == '\n'&& lineWidths[lineIndex]!=0) { // new line
-				if (lineWidths[lineIndex] + wordWidth < maxWidth) {
-					lines[lineIndex] += word;
-					lineWidths[lineIndex] += wordWidth;
-					lineWidths.push_back(0);
-					lines.push_back("");
+			if (chr == '\n'){// || chr == ' ' && lineWidths[lineIndex] + wordWidth + added > reachedWidth) { // new line
+				//if (lineWidths[lineIndex] + wordWidth < maxWidth) {
+				lines[lineIndex] += word;
+				lineWidths[lineIndex] += wordWidth;
+				if (chr == ' ') {
+					lines[lineIndex] += ' ';
+					lineWidths[lineIndex] += added;
 				}
-				else {
-					lineWidths.push_back(wordWidth);
-					lines.push_back(word);
-				}
+				//if (chr == '\n')
+				//	lines[lineIndex] += '\n';
+				//if (i!=text.length()-1) {
+				lineWidths.push_back(0);
+				//	if(chr=='\n')
+				lines.push_back("\n");
+				//	else
+				//		lines.push_back("");
+				//}
+				//}
+				//else {
+				//	lineWidths.push_back(wordWidth);
+				//	lines.push_back(word);
+				//}
 				word = "";
 				wordWidth = 0;
 				lineIndex++;
 				continue;
 			}
+			/*
 			if (lineWidths[lineIndex]+ wordWidth + added >maxWidth) {
 				i--;
+				
 				if (word[0] == ' ') {
 					word = word.substr(1);
 					wordWidth -= spacing+wantedHeight * (font->charWid[chr] / (float)font->charSize);
 				}
+				
 				lineWidths.push_back(wordWidth);
 				lines.push_back(word);
 				word = "";
@@ -167,78 +186,110 @@ namespace renderer
 				lineIndex++;
 				continue;
 			}
-			if (chr==' ') {
+			*/
+			/*
+			if (chr == ' ') {
 				lines[lineIndex] += word;
 				lineWidths[lineIndex] += wordWidth;
 				word = "";
 				wordWidth = 0;
 			}
+			*/
 			word += chr;
 			wordWidth += added;
+
+			// add the last stuff if the last character is reached
 			if (i == text.size() - 1) {
 				lines[lineIndex] += word;
 				lineWidths[lineIndex] += wordWidth;
 			}
+			// get the maximum width
+			if (wordWidth > reachedWidth) {
+				reachedWidth = wordWidth;
+			}
 		}
-		//std::cout << rowWidths.size() << "\n";
-		//std::cout << lineWidths.size()<<" "<<wantedHeight << " "<< (maxHeight/ lineWidths.size())<< "\n";
+		//std::cout << "Lines " << lineWidths.size() << " " << lines.size() << "\n";
 		
+		if (reachedWidth>maxWidth) {
+			wantedHeight *= maxWidth / reachedWidth;
+			for (int i = 0; i < lineWidths.size(); i++) {
+				//lineWidths[i] -= spacing * (lines[i].length() - 1);
+				lineWidths[i] *= maxWidth/reachedWidth;
+				//lineWidths[i] += spacing*(lines[i].length()-1);
+				//std::cout << rowWidths[i] << "\n";
+			}
+		}
 		if (lineWidths.size()*wantedHeight>maxHeight) {
 			for (int i = 0; i < lineWidths.size(); i++) {
 				//lineWidths[i] -= spacing * (lines[i].length() - 1);
-				lineWidths[i] *= maxHeight / lineWidths.size()/wantedHeight;
+				lineWidths[i] *= maxHeight / (lineWidths.size()*wantedHeight);
 				//lineWidths[i] += spacing*(lines[i].length()-1);
 				//std::cout << rowWidths[i] << "\n";
 			}
 			wantedHeight = maxHeight / lineWidths.size();
 		}
 
-		//float accWidth = 0;
-		/*
-		if (atChar != -1) { // do marker
-			float wid = 0;
-			float hei = 0;
-			for (int i = 0; i < atChar; i++) {
-				int cha = text.at(i);
-				if ((char)cha == '\n') {
-					wid = 0;
-					hei++;
-					continue;
-				}
-				if (cha < 0) {
-					cha += 256;
-				}
-				wid += font->charWid[cha];
-			}
-			float markerX = x + wid * ((wantedHeight / (16 / 9.f)) / font->charSize);
-			float markerY = y + hei * wantedHeight;
-			float wuv = font->charWid[0] / (float)font->imgSize;
-			float wxy = wantedHeight * (font->charWid[0] / (float)font->charSize);
-			float u = (0 % 16);
-			float v = 15 - (0 / 16);
-			
-			Insert4(verts, 16 * indChar, markerX, markerY, (u) / 16, (v) / 16);
-			Insert4(verts, 4 + 16 * indChar, markerX, markerY + wantedHeight, (u) / 16, (v + 1) / 16);
-			Insert4(verts, 8 + 16 * indChar, markerX + wxy, markerY + wantedHeight, (u) / 16 + wuv, (v + 1) / 16);
-			Insert4(verts, 12 + 16 * indChar, markerX + wxy, markerY, (u) / 16 + wuv, (v) / 16);
-
-			indChar++;
-		}
-		*/
 		float x = 0;
 		float y = 0;
 		if (center) {
-			y = (maxHeight-wantedHeight*lines.size())/2;
+			y = (maxHeight - wantedHeight * lines.size()) / 2;
 		}
 		int dataIndex = 0;
+		
+		if (atChar != -1) { // do marker
+			//std::cout << lines.size()<<"\n";
+			for (int i = 0; i < lines.size();i++) {
+				if (center)
+					x = (maxWidth - lineWidths[i]) / 2;
+				else
+					x = 0;
+				for (int j = 0; j < lines[i].length(); j++) {
+					char chr = lines[i][j];
+
+					float wStride = wantedHeight * (font->charWid[chr] / (float)font->charSize);
+					
+					if (atChar == dataIndex) {
+						break;
+					}
+					x += wStride + spacing;
+
+					dataIndex++;
+				}
+				if (atChar == dataIndex)
+					break;
+				y += wantedHeight;
+			}
+			if (atChar != dataIndex) {
+				if (center)
+					x = maxWidth / 2;
+				else
+					x = 0;
+			}
+			dataIndex = 0;
+			//std::cout << x << "\n";
+			float wuv = font->charWid[0] / (float)font->imgSize;
+			float u = (0 % 16);
+			float v = 15 - (0 / 16);
+			float markerW = wantedHeight * (font->charWid[0] / (float)font->charSize);
+			Insert4(verts, 16 * dataIndex, x, y, (u) / 16, (v + 1) / 16);
+			Insert4(verts, 4 + 16 * dataIndex, x, y + wantedHeight, (u) / 16, (v) / 16);
+			Insert4(verts, 8 + 16 * dataIndex, x + markerW, y + wantedHeight, (u) / 16 + wuv, (v) / 16);
+			Insert4(verts, 12 + 16 * dataIndex, x + markerW, y, (u) / 16 + wuv, (v + 1) / 16);
+			dataIndex = 1;
+			if (center) {
+				y = (maxHeight - wantedHeight * lines.size()) / 2;
+			}
+		}
 		for (int i = 0; i < lines.size();i++) {
 			//std::cout << "[" << lines[i] << "] " << "\n";
 			float x = 0;
 			if (center)
 				x = (maxWidth - lineWidths[i]) / 2;
+			//std::cout << lines[i].length()<<"\n";
 			for (int j = 0; j < lines[i].length();j++) {
 				char chr = lines[i][j];
-
+				//if (chr == '\n')
+				//	continue;
 				float wStride = wantedHeight * (font->charWid[chr] / (float)font->charSize);
 
 				float wuv = font->charWid[chr] / (float)font->imgSize;
@@ -264,11 +315,11 @@ namespace renderer
 			y += wantedHeight;
 		}
 
-		int charIndex = (((atChar != -1) + dataIndex) % TEXT_BATCH);
-		//std::cout << (16*charIndex)<<" "<<(16*(TEXT_BATCH-charIndex));
-		memset(&verts[16*charIndex], 0, 16*(TEXT_BATCH-charIndex));
-
-		textBuffer.ModifyVertices(0, 4 * 4 * TEXT_BATCH, verts);
+		int charIndex = dataIndex % TEXT_BATCH;
+		
+		memset(&verts[16*charIndex], 0, 16*(TEXT_BATCH-charIndex)*sizeof(float));
+		
+		textBuffer.ModifyVertices(0, 16 * TEXT_BATCH, verts);
 		textBuffer.Draw();
 	}
 

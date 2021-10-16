@@ -52,6 +52,15 @@ namespace studio
 
 		overlay::RenderPanels();
 
+		//overlay::GetShader().Bind();
+		
+		//overlay::GetShader().SetVec2("uPos", { 100,100 });
+		//overlay::GetShader().SetVec2("uSize", { 1,1 });
+		//overlay::GetShader().SetVec4("uColor", 0.5, 1, .2, 1);
+		//overlay::GetShader().SetInt("uTextured", 1);
+		
+		//renderer::DrawString(assets::GetFont("consolas"),"Hello",true,50,100,50,0);
+
 		glfwSwapBuffers(renderer::GetWindow());
 	}
 	float lastDrawX = -1, lastDrawY = -1;

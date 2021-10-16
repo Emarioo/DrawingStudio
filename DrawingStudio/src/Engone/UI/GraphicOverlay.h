@@ -1029,11 +1029,12 @@ namespace overlay
 							return false;
 						}
 					}
-					std::cout << "Edit " << isEditing << "\n";
+					//std::cout << "Edit " << isEditing << "\n";
 				}
 			}
 			if (isEditing) {
 				if(e.eventType==input::EventType::Key) {
+					//std::cout << "Key " << e.key << " "<<e.scancode << "\n";
 					if (e.key == GLFW_KEY_LEFT_SHIFT) {
 						//elemShiftL = action;
 					}
@@ -1242,15 +1243,16 @@ namespace overlay
 							//if (text.text.size() < text.maxChar) {
 							text = text.substr(0,cursorPos)+'\n'+text.substr(cursorPos);
 							cursorPos++;
+							//std::cout <<text<<"]\n";
 							//}
 						}
 					}
 					else {
 						if (e.action==1) {
-							char chr = (char)e.scancode;// GetChar(key, elemShiftL || elemShiftR, elemAltR);
+							char chr = (char)e.key;// GetChar(key, elemShiftL || elemShiftR, elemAltR);
+							//std::cout << "Hellu24! " << chr << (char)e.key<< "\n";
 							if (chr != 0) {
 								//if (text.text.size() < text.maxChar) {
-								std::cout << "Hellu! " << chr << "\n";
 								text = text.substr(0, cursorPos) + chr + text.substr(cursorPos);
 								cursorPos++;
 								//}
@@ -1268,10 +1270,13 @@ namespace overlay
 			overlay::GetShader().SetVec4("uColor", 0.5, 1, .2, 1);
 			overlay::GetShader().SetInt("uTextured", 1);
 			
+			int hej = -1;
+			if (isEditing)
+				hej = cursorPos;
 			if(height==0)
-				renderer::DrawString(font, text, center, panel->renderH, panel->renderW, panel->renderH,-1);
+				renderer::DrawString(font, text, center, panel->renderH, panel->renderW, panel->renderH, hej);
 			else 
-				renderer::DrawString(font, text, center, height,panel->renderW, panel->renderH,-1);
+				renderer::DrawString(font, text, center, height,panel->renderW, panel->renderH, hej);
 		}
 
 		int cursorPos=0;
@@ -1434,7 +1439,7 @@ namespace overlay
 	{
 		overlayShader.Init(oShader);
 		using namespace input;
-		AddListener(new Listener(EventType::Click | EventType::Move, [](Event& e) {
+		AddListener(new Listener(EventType::Click | EventType::Move|EventType::Key|EventType::Scroll, [](Event& e) {
 			for (int i = 0; i < panels.size();i++) {
 				if (panels[i]->Event(e))
 					return true;

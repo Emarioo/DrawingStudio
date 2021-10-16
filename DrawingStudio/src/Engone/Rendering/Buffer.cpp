@@ -51,11 +51,11 @@ void Buffer::SetAttribI(unsigned int loc, unsigned int count, unsigned int strid
 }
 void Buffer::ModifyVertices(unsigned int offset, unsigned int icount, void* data) {
 	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-	glBufferSubData(GL_ARRAY_BUFFER, offset, icount * sizeof(unsigned int), data);
+	glBufferSubData(GL_ARRAY_BUFFER, offset, icount * sizeof(float), data);
 }
 void Buffer::ModifyIndices(unsigned int offset, unsigned int count, void* data) {// count in number of floats
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, count * sizeof(float), data);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, count * sizeof(unsigned int), data);
 }
 TriangleBuffer::TriangleBuffer(bool dynamic, void* vertices, unsigned int vertexCount, void* indices, unsigned int indexCount)
 : Buffer(dynamic,vertices,vertexCount,indices,indexCount) {}
