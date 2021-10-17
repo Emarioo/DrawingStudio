@@ -1,8 +1,8 @@
 #include "History.h"
 
-#include "../Engone/EventHandler.h"
-
 #include "GLFW/glfw3.h"
+#include "../Engone/GLFWEventHandler.h"
+
 
 namespace history
 {
@@ -25,11 +25,13 @@ namespace history
 				if (input::IsDown(GLFW_KEY_LEFT_CONTROL)) {
 					if (e.key == GLFW_KEY_Z) {
 						//DrawHistory* history = GetHistory<DrawHistory>();
-						DrawHistory* history = (DrawHistory*)histories.back();
-						histories.pop_back();
-						history->Revert();
+						if (histories.size() > 0) {
+							DrawHistory* history = (DrawHistory*)histories.back();
+							histories.pop_back();
+							history->Revert();
 
-						delete history;
+							delete history;
+						}
 					}
 					else if (e.key == GLFW_KEY_R) {
 

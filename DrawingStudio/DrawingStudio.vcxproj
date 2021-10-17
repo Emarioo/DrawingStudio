@@ -178,7 +178,8 @@
     <ClInclude Include="src\DrawingStudio\Objects\Image.h" />
     <ClInclude Include="src\DrawingStudio\Studio.h" />
     <ClInclude Include="src\DrawingStudio\Tools.h" />
-    <ClInclude Include="src\Engone\EventHandler.h" />
+    <ClInclude Include="src\Engone\ConsoleEventHandler.h" />
+    <ClInclude Include="src\Engone\GLFWEventHandler.h" />
     <ClInclude Include="src\Engone\Utilities.h" />
     <ClInclude Include="src\Keybindings.h" />
     <ClInclude Include="src\DrawingStudio\Objects\Layer.h" />

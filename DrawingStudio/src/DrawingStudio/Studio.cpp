@@ -23,7 +23,7 @@ namespace studio
 	static int lastmx, lastmy;
 
 	static float offsetX = 0, offsetY = 0;
-	static float zoom = 2;
+	static float zoom = 12;
 
 	void InitAssets()
 	{
@@ -36,12 +36,26 @@ namespace studio
 
 	}
 	float last=0;
+	struct Drag
+	{
+		float x, y, x2, y2;
+	};
+	std::vector<Drag> draggings;
 	void Tick()
 	{
 		float delta = glfwGetTime() - last;
 		last = glfwGetTime();
 
 		overlay::UpdatePanels(delta);
+
+		if (selectedImage != nullptr) {
+			if (selectedImage->selectedLayer != nullptr) {
+				while (draggings.size() > 0) {
+					tools::DragTool(selectedImage->selectedLayer, draggings[0].x, draggings[0].y, draggings[0].x2,draggings[0].y2);
+					draggings.erase(draggings.begin());
+				}
+			}
+		}
 
 		glViewport(0, 0, winW, winH);
 
@@ -73,8 +87,7 @@ namespace studio
 
 		using namespace overlay;
 		Panel* filePanel = new Panel();
-		filePanel->x.Left(0)->y.Top(0)->w.Center(60)->h.Center(25);
-		filePanel->color = { 1.f,1.f,1.f,1.f };
+		filePanel->Left(0)->Top(0)->Width(60)->Height(25)->Color({ 1.f });
 		Transition& t = filePanel->AddTransition("a");
 		t.eventType = input::EventType::Move;
 		t.Fade({ .8f,.8f,1.f }, 0.2);
@@ -82,8 +95,7 @@ namespace studio
 		AddPanel(filePanel);
 
 		Panel* toolPanel = new Panel();
-		toolPanel->x.Right(0)->y.Center(0)->w.Center(40)->h.Center(200);
-		toolPanel->color = { .8f,0.9f,0.9f };
+		toolPanel->Right(0)->CenterY(0)->Width(40)->Height(200)->Color({.8f,.9f,.9f});
 		Grid* grid = new Grid(1, 0, [](int index,input::Event& e) {
 			if (index == 0) {
 				tools::SetTool(tools::ToolPencil);
@@ -98,8 +110,7 @@ namespace studio
 		AddPanel(toolPanel);
 
 		Panel* colorPanel = new Panel();
-		colorPanel->x.Left(0)->y.Bottom(0)->w.Center(200)->h.Center(200);
-		colorPanel->color = { .8f,0.9f,0.9f };
+		colorPanel->Left(0)->Bottom(0)->Width(200)->Height(200)->Color({.8f,.9f,.9f});
 		class ColorComp : public Component
 		{
 		public:
@@ -301,11 +312,37 @@ namespace studio
 		AddPanel(colorPanel);
 
 		Panel* propertyPanel = new Panel();
-		propertyPanel->x.Left(0)->y.Bottom(0,colorPanel)->w.Center(150)->h.Center(60);
-		propertyPanel->color = { .8f,0.9f,0.9f };
-		propertyPanel->AddComponent(new Text("Size: ",assets::GetFont("consolas"),true,true));
-		AddPanel(propertyPanel);
+		propertyPanel->Left(0)->Top(0, filePanel)->Width(150)->Height(60)->Color({.8f,.9f,.9f});
+		Text* sizeComp = new Text("2", assets::GetFont("consolas"), true, true);
+		propertyPanel->AddComponent(sizeComp);
+		input::AddListener(new input::Listener(input::EventType::Key|input::EventType::Scroll, [=](input::Event& e) {
+			if (e.eventType == input::EventType::Key) {
+				if (sizeComp->isEditing) {
+					if (sizeComp->text.size() > 0) {
+						try {
+							tools::SetSize(std::stoi(sizeComp->text));
+						}
+						catch (std::invalid_argument) {
 
+						}
+					}
+				}
+			}
+			else if(e.eventType==input::EventType::Scroll) {
+				if (propertyPanel->Inside(e.mx, e.my)) {
+					float newSize = tools::GetSize() - e.scrollY;
+					if (newSize < 0)
+						newSize = 0;
+					tools::SetSize(newSize);
+					
+					sizeComp->text = std::to_string((int)newSize);
+					return true;
+				}
+			}
+			return false;
+			}));
+		AddPanel(propertyPanel);
+		
 		input::AddListener(new input::Listener(input::EventType::Key,-10, [=](input::Event& e) {
 			if (e.action==1) {
 				if (e.key==GLFW_KEY_P) {
@@ -319,8 +356,6 @@ namespace studio
 			}));
 		input::AddListener(new input::Listener(input::EventType::Click | input::EventType::Move | input::EventType::Scroll,-10, [=](input::Event& e) {
 			//std::cout << e.mx << " " << e.my << " " << e.action << " " << e.button << "\n";
-
-			//std::cout << (int)e.eventType <<" " << (e.eventType == input::EventType::Scroll) << " \n";
 			if (e.eventType == input::EventType::Click) {
 				if (e.button == GLFW_MOUSE_BUTTON_1) {
 					doDraw = e.action == 1;
@@ -338,7 +373,7 @@ namespace studio
 								if (image->selectedLayer != nullptr) {
 									lastDrawX = tx;
 									lastDrawY = ty;
-									tools::SetColor(1,0,0,1);
+									//tools::SetColor(1,0,0,1);
 									tools::UseTool(image->selectedLayer,tx,ty);
 								}
 							}
@@ -369,8 +404,9 @@ namespace studio
 									lastDrawY = ty;
 								}*/
 							//std::cout << "Draw\n";
-							tools::SetColor(0, 0, 0, 1);
-								tools::DragTool(layer,lastDrawX,lastDrawY,tx,ty);
+							//tools::SetColor(0, 0, 0, 1);
+							draggings.push_back({ lastDrawX,lastDrawY,tx,ty });
+								//tools::DragTool(layer,lastDrawX,lastDrawY,tx,ty);
 							//std::cout << "stop\n";
 
 								//tools::DragBrush(layer,lastDrawX,lastDrawY, tx, ty);
@@ -389,10 +425,16 @@ namespace studio
 				}
 			}
 			else if (e.eventType == input::EventType::Scroll) {
-				float lastZoom = zoom;
-				zoom *= (e.scroll > 0 ? pow(1.1, abs(e.scroll)) : pow(0.9, abs(e.scroll)));
-				offsetX += ((e.mx - winW / 2) / zoom - (e.mx - winW / 2) / lastZoom);
-				offsetY -= ((e.my - winH / 2) / zoom - (e.my - winH / 2) / lastZoom);
+				if (e.scrollY == 1 || e.scrollY == -1) {
+					float lastZoom = zoom;
+					zoom *= (e.scrollY > 0 ? pow(1.1, abs(e.scrollY)) : pow(0.9, abs(e.scrollY)));
+					offsetX += ((e.mx - winW / 2) / zoom - (e.mx - winW / 2) / lastZoom);
+					offsetY -= ((e.my - winH / 2) / zoom - (e.my - winH / 2) / lastZoom);
+				}
+				else {
+					offsetX += e.scrollX*18/zoom;
+					offsetY -= e.scrollY*18/zoom;
+				}
 			}
 			return false;
 			}));
@@ -405,8 +447,11 @@ namespace studio
 
 		Image* image = new Image();
 		image->x = 0;
-		image->Init(200, 200);
+		image->Init(1000, 1000);
 		images.push_back(image);
+		tools::SetSize(3);
+		tools::DragBrush(image->layers[0], 450, 450, 550, 530);
+		tools::DragBrush(image->layers[0], 400, 400, 320,500);
 
 		/*
 		Image* image1 = new Image();
@@ -426,12 +471,6 @@ namespace studio
 		images.push_back(image3);
 		*/
 
-		/*
-		for (int i = 0; i < 100 * 100; i++) {
-			layer->data[i * 4] = 255;
-			layer->data[i * 4 + 1] = 255;
-			layer->data[i * 4 + 2] = 255;
-		}*/
 		//layer->Refresh();
 		/*
 		glGenFramebuffers(1, &fbo);

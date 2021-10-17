@@ -16,7 +16,7 @@
 #include "GLFW/glfw3.h"
 #include "GL/glew.h"
 
-#include "../EventHandler.h"
+#include "../GLFWEventHandler.h"
 
 namespace overlay
 {
@@ -819,18 +819,69 @@ namespace overlay
 		ConstraintY y;
 		ConstraintW w;
 		ConstraintH h;
+
+		Panel* CenterX(int pos, Panel* stick = nullptr)
+		{
+			y.Center(pos, stick);
+			return this;
+		}
+		Panel* Bottom(int pos, Panel* stick = nullptr)
+		{
+			y.Bottom(pos, stick);
+			return this;
+		}
+		Panel* Top(int pos, Panel* stick = nullptr)
+		{
+			y.Top(pos, stick);
+			return this;
+		}
+		Panel* CenterY(int pos, Panel* stick = nullptr)
+		{
+			x.Center(pos, stick);
+			return this;
+		}
+		Panel* Left(int pos, Panel* stick = nullptr)
+		{
+			x.Left(pos, stick);
+			return this;
+		}
+		Panel* Right(int pos, Panel* stick = nullptr)
+		{
+			x.Right(pos, stick);
+			return this;
+		}
+		Panel* Width(int pos, Panel* stick = nullptr)
+		{
+			w.Center(pos, stick);
+			return this;
+		}
+		Panel* Height(int pos, Panel* stick = nullptr)
+		{
+			h.Center(pos, stick);
+			return this;
+		}
 		float rr, rg, rb, ra;
 		float renderX, renderY, renderW, renderH;
 
 		Color color;
+		Panel* Color(Color color)
+		{
+			this->color = color;
+			return this;
+		}
 		Texture* texture;
 
 		void AddComponent(Component* component)
 		{
 			component->panel = this;
 			components.push_back(component);
-		}
-
+		}/*
+		Component* GetComponent(int index)
+		{
+			if (index < 0 || index >= components.size())
+				return nullptr;
+			return components[index];
+		*/
 		void SetTransition(const std::string& name, bool f)
 		{
 			for (int i = 0; i < transitions.size();i++) {
@@ -1026,15 +1077,14 @@ namespace overlay
 							return true;
 						}
 						else {
+							isEditing = false;
 							return false;
 						}
 					}
-					//std::cout << "Edit " << isEditing << "\n";
 				}
 			}
 			if (isEditing) {
 				if(e.eventType==input::EventType::Key) {
-					//std::cout << "Key " << e.key << " "<<e.scancode << "\n";
 					if (e.key == GLFW_KEY_LEFT_SHIFT) {
 						//elemShiftL = action;
 					}

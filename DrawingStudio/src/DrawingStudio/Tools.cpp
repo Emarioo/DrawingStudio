@@ -6,7 +6,7 @@ namespace tools
 {
 	static Tool tool=ToolPencil;
 	static unsigned char red=0, green=0, blue=0, alpha=255;
-	static float size=10;
+	static float size=3;
 	void SetTool(Tool name)
 	{
 		tool = name;
@@ -26,6 +26,10 @@ namespace tools
 	void SetSize(float s)
 	{
 		size = s;
+	}
+	float GetSize()
+	{
+		return size;
 	}
 	void UseTool(Layer* layer, float x, float y)
 	{
@@ -54,15 +58,23 @@ namespace tools
 	}
 	void Brush(Layer* layer, float x, float y)
 	{
-		for (int i = 0; i < size;i++) {
-			for (int j = 0; j < size; j++) {
-				float tx = i-size/2;
-				float ty = j-size/2;
-				//std::cout << size << " " << tx << " " << ty << "\n";
-				if((size/2)*(size/2)>=pow(tx+.5,2)+pow(ty+.5,2))
-					Pencil(layer, round(x+tx), round(y+ty));
+		int SIZE = (int)size;
+		float off = 0.5;
+		if (SIZE/2.f- SIZE/2 != 0) {
+			off = 0;
+		}
+		for (int i = 0; i < SIZE;i++) {
+			for (int j = 0; j < SIZE; j++) {
+				float tx = i-SIZE/2;
+				float ty = j-SIZE/2;
+				if ((SIZE / 2.f) * (SIZE / 2.f) >= pow(tx+off, 2) + pow(ty+off, 2)) {
+					Pencil(layer, (int)(x+off) + (int)tx, (int)(y+off) + (int)ty);
+				}
 			}
 		}
+		SetColor(1, 0, 1, 1);
+		Pencil(layer, (int)(x + .5), (int)(y + .5));
+		SetColor(0, 0, 0, 1);
 	}
 	struct vec
 	{
@@ -106,38 +118,41 @@ namespace tools
 	};
 	void DragBrush(Layer* layer, float fromX, float fromY, float toX, float toY)
 	{
-		vec from = { fromX,fromY };
-		vec to = { toX,toY };
+		//vec from = { floor(fromX),floor(fromY )};
+		//vec to = { floor(toX),floor(toY) };
 
-		float dx = toX - fromX;
-		float dy = toY - fromY;
-		/*
-		if (dx == 0 || dy == 0)
+		vec from = { (fromX),(fromY) };
+		vec to = { (toX),(toY) };
+
+		float dx = to.x - from.x;
+		float dy = to.y - from.y;
+		
+		if (toX-fromX == 0 && toY-fromY == 0)
 		{
-			//std::cout << "zero\n";
 			return;
 		}
-		*/
-		//SetColor(0, 0, 1, 1);
-		Brush(layer, fromX, fromY);
-		Brush(layer, toX, toY);
-		//SetColor(1,0,0,1);
 
+		SetColor(1,0,0,1);
+		if(dx==0&&abs(dy)==1||abs(dx)==1&&dy==0||dx==0&&dy==0){
+			return;
+		}
 		if (abs(dx)>abs(dy)) {
 			vec dir = { dx / abs(dx),dy / abs(dx) };
 			vec normal = {dir.y,-dir.x};
 			vec normal2 = {-dir.y,dir.x};
+			
 			float step = size/2 / normal.length();
 			float step2 = size/2 / normal.length();
 			vec point = normal * step;
 			vec point2 = normal2 * step2;
+			std::cout << point.y <<" "<<point2.y<<"\n";
 			//std::cout << dx<<" "<<dy << " N: "<<normal.str() << " P: " << point.str() << "\n";
-			for (int i = 0; i < abs(dx); i++) {
+			for (int i = 1; i < abs(dx); i++) {
 				for (int j = 0; j < abs(point.y*2); j++) {
-					Pencil(layer, from.x+point.x+ i*dir.x, from.y +dir.x*point.y +dir.y * i +j);
+					Pencil(layer, from.x+ point.x+ i*dir.x, from.y +dir.x*point.y + round(dir.y * i +j));
 				}
 				for (int j = 0; j < abs(point2.y*2); j++) {
-					Pencil(layer, from.x +point2.x+ i * dir.x, from.y +dir.x*point2.y+ dir.y * i - j);
+					Pencil(layer, from.x +point2.x+ i * dir.x, from.y +dir.x * point2.y + round(dir.y * i - j));
 				}
 			}
 		}
@@ -145,149 +160,25 @@ namespace tools
 			vec dir = { dx / abs(dy),dy / abs(dy) };
 			vec normal = { -dir.y,dir.x };
 			vec normal2 = { dir.y,-dir.x };
-			float step = size / 2 / normal.length();
-			float step2 = size / 2 / normal.length();
+			float step = (int)size / 2 / normal.length();
+			float step2 = (int)size / 2 / normal.length();
+			std::cout << step << " " << step2<<"\n";
 			vec point = normal * step;
 			vec point2 = normal2 * step2;
 			//std::cout << dx << " " << dy << " N: " << normal.str() << " P: " << point.str() << "\n";
-			for (int i = 0; i < abs(dy); i++) {
+			for (int i = 1; i < abs(dy); i++) {
 				for (int j = 0; j < abs(point.x * 2); j++) {
-					Pencil(layer, from.x + dir.y*point.x + i * dir.x+j, from.y + point.y + dir.y * i );
+					Pencil(layer, from.x + round(dir.y*point.x + i * dir.x+j), from.y + point.y + dir.y * i );
 				}
 				for (int j = 0; j < abs(point2.x * 2); j++) {
 					Pencil(layer, from.x + dir.y*point2.x + i * dir.x -j, from.y + point2.y + dir.y * i);
 				}
 			}
 		}
-		//SetColor(0, 0, 1, 1);
-
-		/*
-		//std::cout << dx << " "<<dy<<"\n";
-		if (abs(dx)>abs(dy)) {
-			float k = dy / dx;
-			float ki = -dx/dy;
-			
-			float sided;
-			if (dx > 0) {
-				sided = -size;
-			}
-			else {
-				sided = 0;
-			}
-			for (int i = 0; i < size; i++) {
-				float d = sqrt(size * size - pow(i +sided, 2));
-
-				for (int j = -d; j < d; j++) {
-					int tx = fromX +sided + i;
-					int ty = fromY + j;
-					if (tx<0 || ty<0 || tx>layer->width - 1 || ty>layer->height - 1)
-						continue;
-					Pencil(layer, tx, ty);
-				}
-			}
-			if (dx > 0) {
-				for (int i = 0; i <= dx; i++) {
-					for (int j = -size; j < size; j++) {
-						int tx = fromX + i;
-						int ty = fromY + j+i*k;
-						if (tx<0 || ty<0 || tx>layer->width - 1 || ty>layer->height - 1)
-							continue;
-						Pencil(layer, tx, ty);
-					}
-				}
-			}
-			else {
-				for (int i = 0; i <= abs(dx); i++) {
-					for (int j = -size; j < size; j++) {
-						int tx = fromX - i;
-						int ty = fromY + j - i * k;
-						if (tx<0 || ty<0 || tx>layer->width - 1 || ty>layer->height - 1)
-							continue;
-						Pencil(layer, tx, ty);
-					}
-				}
-			}
-			if (dx > 0) {
-				sided = 0;
-			}
-			else {
-				sided = -size;
-			}
-			for (int i = 0; i < size; i++) {
-				float d = sqrt(size * size - pow(i+sided, 2));
-
-				for (int j = -d; j < d; j++) {
-					int tx = toX +sided+ i;
-					int ty = toY + j;
-					if (tx<0 || ty<0 || tx>layer->width - 1 || ty>layer->height - 1)
-						continue;
-					Pencil(layer, tx, ty);
-				}
-			}
-		}
-		else {
-			float k = dx / dy;
-			
-			float sided;
-			if (dy > 0) {
-				sided = -size;
-			}
-			else {
-				sided = 0;
-			}
-			for (int i = 0; i < size; i++) {
-				float d = sqrt(size * size - pow(i+sided, 2));
-
-				for (int j = -d; j < d; j++) {
-					int tx = fromX + j;
-					int ty = fromY +i+sided;
-					if (tx<0 || ty<0 || tx>layer->width - 1 || ty>layer->height - 1)
-						continue;
-					Pencil(layer, tx, ty);
-				}
-			}
-			
-			if (dy > 0) {
-				for (int i = 0; i <= dy; i++) {
-					for (int j = -size; j < size; j++) {
-						int tx = fromX + j+i*k;
-						int ty = fromY + i;
-						if (tx<0 || ty<0 || tx>layer->width - 1 || ty>layer->height - 1)
-							continue;
-						Pencil(layer, tx, ty);
-					}
-				}
-			}
-			else {
-				for (int i = 0; i <= abs(dy); i++) {
-					for (int j = -size; j < size; j++) {
-						int tx = fromX + j -i*k;
-						int ty = fromY - i;
-						if (tx<0 || ty<0 || tx>layer->width - 1 || ty>layer->height - 1)
-							continue;
-						Pencil(layer, tx, ty);
-					}
-				}
-			}
-			if (dy>0) {
-				sided = 0;
-			}
-			else {
-				sided = -size;
-			}
-			for (int i = 0; i < size; i++) {
-				float d = sqrt(size * size - pow(i+sided, 2));
-
-				for (int j = -d; j < d; j++) {
-					int tx = toX + j;
-					int ty = toY +sided+ i;
-					if (tx<0 || ty<0 || tx>layer->width - 1 || ty>layer->height - 1)
-						continue;
-					Pencil(layer, tx, ty);
-				}
-			}
-		}
-		*/
+		SetColor(0, 1, 1, 1);
+		Brush(layer, from.x, from.y);
+		//std::cout << toX << " " << toY<<"\n";
+		Brush(layer, to.x, to.y);
 	}
 	// All drawing functions use this function
 	void Pencil(Layer* layer, int x, int y)
@@ -310,7 +201,7 @@ namespace tools
 	{
 		float dx = toX-fromX;
 		float dy = toY-fromY;
-		if (dx == 0) {
+		/*if (dx == 0) {
 			if (abs(dy) < 2) {
 				Pencil(layer, toX, toY);
 				return;
@@ -321,7 +212,7 @@ namespace tools
 				Pencil(layer, toX, toY);
 				return;
 			}
-		}
+		}*/
 		if (abs(dx)>abs(dy)) {
 			float k = dy / dx;
 			if (dx>0) {

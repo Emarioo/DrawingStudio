@@ -15,6 +15,7 @@ namespace tools
 	Tool GetTool();
 	void SetColor(float r, float g, float b, float a);
 	void SetSize(float size);
+	float GetSize();
 	void UseTool(Layer* layer, float x, float y);
 	void DragTool(Layer* layer, float fromX, float fromY, float toX, float toY);
 	void Brush(Layer* layer, float x, float y);

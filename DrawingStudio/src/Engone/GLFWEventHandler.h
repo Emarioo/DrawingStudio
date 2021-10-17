@@ -2,32 +2,29 @@
 
 /* 
 
-EventHandler made by Emarioo/Dataolsson, Version 1.0 (2021.10.04)
+GLFWEventHandler made by Emarioo/Dataolsson, Version 2.0 (2021.10.17)
 
 What is it:
-	This header features input event handling. From either windows console or glfw3.
+	This header features input event handling. This particular file is an event wrapper for glfw3.
 	Checking input can be done by a listener or from just a function.
 
 	Disclaimer, there may be bugs.
 
 How to use:
-	Begin by including this header into your main.cpp file and add #define EVENT_DEF.
-	Depending on if you want windows console or glfw3 or both #define EVENT_GLFW/EVENT_CONSOLE
+	Begin by including this header into your main.cpp file and add #define DEFINE_HANDLER.
 	#include glfw3.h before this header!
 
 	The Init() should be called before other functions in this header. Preferable before the game loop.
 	Init(GlfWwindow) needs a window from glfw to set the callbacks.
 
-	After this use RefreshEvents() in the beginning of your game loop to update events.
 	Use ResetInput() at the end of your game loop to reset certain events.
-
-	If you only use the listeners and not the functions with glfw, the refresh function
-	won't be necessary but I would recommend it anyway just incase you decide
-	to use other functionalities and can't figure out why it doesn't work.
 
 Other:
 	You can use and edit this however you want but give credit where credit is due.
 
+Versions:
+	1.0: First edition, listeners, functions to detect mouse, key scroll states. Console and GLFW is merged here.
+	2.0: Seperated Console and GLFW into seperate files.
 */
 
 #include <functional>
@@ -36,32 +33,17 @@ Other:
 #include <fstream>
 #include <iostream>
 
-#ifdef EVENT_CONSOLE
-#include <windows.h>
-#endif
-
 namespace input
 {
 	/*==============
 	//  Features  //
 	==============*/
 	
-#ifdef EVENT_CONSOLE
-
-	/*
-	Init usage of windows console.
-	*/
-	void Init();
-
-#endif
-#ifdef EVENT_GLFW
 
 	/*
 	Init usage of glfw3.
 	*/
 	void Init(GLFWwindow* window);
-
-#endif
 
 	typedef char EventTypes;
 
@@ -99,9 +81,14 @@ namespace input
 			{
 				int action, key, scancode;
 			};
-			struct // mouse
+			struct // mouse click move
 			{
-				int action, mx, my, button, scroll;
+				int action, button, mx, my;
+			};
+			struct // mouse scroll
+			{
+				float scrollX, scrollY;
+				int mx, my;
 			};
 			struct // Event functions
 			{
@@ -133,8 +120,6 @@ namespace input
 
 	void AddListener(Listener* listener);
 
-	// Use this at the beginning of you gameloop.
-	void RefreshEvents();
 	// Use this at the end of you gameloop.
 	void ResetEvents();
 
@@ -155,7 +140,8 @@ namespace input
 	/*
 	return 0 if no scroll and 1 or -1 if scrolled.
 	*/
-	int IsScrolled();
+	int IsScrolledY();
+	int IsScrolledX();
 
 	//-- Keybindings
 	bool IsKeybindingDown(short id);
@@ -175,24 +161,20 @@ namespace input
 	//  Implementation  //
 	====================*/
 
-#ifdef EVENT_DEF
+#ifdef DEFINE_HANDLER
 	struct Input
 	{
 		int code;
 		bool down = false;
 		int pressed = false;
 	};
-	static int mouseX, mouseY, scroll;
+	static int mouseX, mouseY;
+	static float scrollX, scrollY;
 	static std::unordered_map<short, Keybinding> keybindings;
 	static std::vector<Listener*> listeners;
 	static std::vector<Event> events;
 	static std::vector<Input> inputs;
 
-#ifdef EVENT_CONSOLE
-	static INPUT_RECORD inRecord[8];
-	static HANDLE inHandle;
-	static DWORD numRead;
-#endif
 	inline EventType operator|(EventType a, EventType b)
 	{
 		return (EventType)((char)a | (char)b);
@@ -247,13 +229,6 @@ namespace input
 			events.pop_back();
 	}
 
-#ifdef EVENT_CONSOLE
-	void Init()
-	{
-		inHandle = GetStdHandle(STD_INPUT_HANDLE);
-	}
-#endif
-#ifdef EVENT_GLFW
 	void Init(GLFWwindow* window)
 	{
 		glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -286,11 +261,14 @@ namespace input
 			});
 		glfwSetScrollCallback(window, [](GLFWwindow* window, double xoffset, double yoffset) {
 			Event e(EventType::Scroll);
-			e.scroll = yoffset;
+			e.scrollX = xoffset;
+			e.scrollY = yoffset;
 			e.mx = mouseX;
 			e.my = mouseY;
 			events.push_back(e);
-			scroll = yoffset;
+			//std::cout << xoffset << " " << yoffset << "\n";
+			scrollX = xoffset;
+			scrollY = yoffset;
 			ExecuteListeners();
 			});
 		glfwSetWindowFocusCallback(window, [](GLFWwindow* window, int focus) {
@@ -307,7 +285,6 @@ namespace input
 			ExecuteListeners();
 			});
 	}
-#endif
 	void AddListener(Listener* listener)
 	{
 		// Prevent duplicates
@@ -343,15 +320,22 @@ namespace input
 		}
 		return false;
 	}
-	int IsScrolled()
+	int IsScrolledY()
 	{
-		if (scroll != 0)
-			return scroll;
+		if (scrollY != 0)
+			return scrollY;
+		return 0;
+	}
+	int IsScrolledX()
+	{
+		if (scrollX != 0)
+			return scrollX;
 		return 0;
 	}
 	void ResetEvents()
 	{
-		scroll = 0;
+		scrollX = 0;
+		scrollY = 0;
 		for (int i = 0; i < inputs.size(); i++) {
 			if (inputs[i].pressed > 0)
 				inputs[i].pressed--;
@@ -444,75 +428,5 @@ namespace input
 	}
 	void ClearKeybindings(){keybindings.clear();}
 	static bool lastL = false, lastM = false, lastR = false;
-	void RefreshEvents()
-	{
-#ifdef EVENT_CONSOLE
-		if (inHandle != nullptr) {
-			DWORD num;
-			GetNumberOfConsoleInputEvents(inHandle, &num);
-			if (num > 0) {
-				ReadConsoleInput(inHandle, inRecord, 8, &numRead);
-				for (int i = 0; i < numRead; i++) {
-					Event e;
-					switch (inRecord[i].EventType) {
-					case KEY_EVENT:
-						input::SetInput(inRecord[i].Event.KeyEvent.wVirtualKeyCode, inRecord[i].Event.KeyEvent.bKeyDown);
-						e.eventTypes = KeyEvent;
-						e.key = inRecord[i].Event.KeyEvent.wVirtualKeyCode;
-						e.scancode = inRecord[i].Event.KeyEvent.wVirtualScanCode;
-						e.action = inRecord[i].Event.KeyEvent.bKeyDown;
-						events.push_back(e);
-						break;
-					case MOUSE_EVENT:
-						bool lb = inRecord[i].Event.MouseEvent.dwButtonState & 1;
-						bool mb = (inRecord[i].Event.MouseEvent.dwButtonState >> 2) & 1;
-						bool rb = (inRecord[i].Event.MouseEvent.dwButtonState >> 1) & 1;
-
-						input::SetInput(VK_LBUTTON, lb);
-						input::SetInput(VK_MBUTTON, mb);
-						input::SetInput(VK_RBUTTON, rb);
-						mouseX = inRecord[i].Event.MouseEvent.dwMousePosition.X;
-						mouseY = inRecord[i].Event.MouseEvent.dwMousePosition.Y;
-
-						e.mx = mouseX;
-						e.my = mouseY;
-						switch (inRecord[i].Event.MouseEvent.dwEventFlags) {
-						case 0:
-							e.eventTypes = ClickEvent;
-							if (lastL != lb) {
-								e.action = lb;
-								e.button = VK_LBUTTON;
-								events.push_back(e);
-							}
-							if (lastM != mb) {
-								e.action = mb;
-								e.button = VK_MBUTTON;
-								events.push_back(e);
-							}
-							if (lastR != rb) {
-								e.action = rb;
-								e.button = VK_RBUTTON;
-								events.push_back(e);
-							}
-							break;
-						case MOUSE_MOVED:
-							e.eventTypes = MoveEvent;
-							events.push_back(e);
-							break;
-						case MOUSE_WHEELED:
-							e.eventTypes = ScrollEvent;
-							scroll = inRecord[i].Event.MouseEvent.dwButtonState > 0 ? 1 : -1;
-							e.scroll = scroll;
-							events.push_back(e);
-							break;
-						}
-						break;
-					}
-				}
-			}
-		}
-#endif
-		ExecuteListeners();
-	}
 #endif
 }

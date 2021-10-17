@@ -65,7 +65,7 @@
     <ClInclude Include="src\Engone\Rendering\Font.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Engone\EventHandler.h">
+    <ClInclude Include="src\Engone\GLFWEventHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Engone\Utilities.h">
@@ -84,6 +84,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\DrawingStudio\History.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engone\ConsoleEventHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
