@@ -1,9 +1,7 @@
 #pragma once
 
-#include "../Engone/UI/GraphicOverlay.h"
-#include "AssetManager.h"
-
-#include "Objects/Image.h"
+#include "Engone/Rendering/Renderer.h"
+#include "Engone/UI/GUIManager.h"
 
 namespace studio
 {

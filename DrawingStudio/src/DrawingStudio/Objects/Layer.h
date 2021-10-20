@@ -3,16 +3,16 @@
 Store the pixel data of this layer. A container the modification of it is done elsewhere.
 */
 
-#include "../../Engone/Rendering/Texture.h"
-#include "../../Engone/Rendering/Buffer.h"
+#include "Engone/Rendering/Texture.h"
+#include "Engone/Rendering/Buffer.h"
 
 class Layer
 {
 public:
 	Layer()=default;
 	
-	TriangleBuffer buffer;
-	Texture* texture;
+	engone::TriangleBuffer buffer;
+	engone::Texture* texture;
 	unsigned char* data;
 	int width, height;
 	bool needRefresh = false;
@@ -40,7 +40,7 @@ public:
 
 		buffer.Init(false,vert,16,index,6);
 		buffer.SetAttrib(0, 4, 4, 0);
-		texture = new Texture();
+		texture = new engone::Texture();
 		texture->Init(width, height, data);
 	}
 	void Set(int x,int y,unsigned char red,unsigned char green,unsigned char blue, unsigned alpha)

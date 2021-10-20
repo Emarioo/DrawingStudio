@@ -1,7 +1,6 @@
 #include "History.h"
 
-#include "GLFW/glfw3.h"
-#include "../Engone/GLFWEventHandler.h"
+#include "Engone/EventManager.h"
 
 
 namespace history
@@ -19,10 +18,11 @@ namespace history
 	}
 	void Init()
 	{
-		input::AddListener(new input::Listener(input::EventType::Key, [](input::Event& e) {
+		using namespace engone;
+		AddListener(new Listener(EventType::Key, [](Event& e) {
 			//std::cout << e.action << " " << e.key << "\n";
 			if (e.action == 1) {
-				if (input::IsDown(GLFW_KEY_LEFT_CONTROL)) {
+				if (IsKeyDown(GLFW_KEY_LEFT_CONTROL)) {
 					if (e.key == GLFW_KEY_Z) {
 						//DrawHistory* history = GetHistory<DrawHistory>();
 						if (histories.size() > 0) {

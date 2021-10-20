@@ -3,7 +3,7 @@ R"(
 #shader vertex
 #version 330 core
 
-layout(location = 0) in vec2 vPos;
+layout(location = 0) in vec4 vPos;
 
 uniform vec2 uPos;
 uniform vec2 uSize;
@@ -22,7 +22,7 @@ void main()
 	value = 1-vPos.y;
 	alpha = vPos.x;
 
-	fPos=vPos;
+	fPos=vPos.xy;
 
 	gl_Position = vec4((vPos.x*uSize.x+uPos.x)/uWindow.x*2-1, 1-(vPos.y*uSize.y+uPos.y)/uWindow.y*2, 0, 1);
 };

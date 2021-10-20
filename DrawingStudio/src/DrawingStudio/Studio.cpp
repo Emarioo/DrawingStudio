@@ -3,14 +3,20 @@
 #include <vector>
 #include <unordered_map>
 
+#include "Engone/Handlers/AssetHandler.h"
+
+#include "DrawingStudio/Objects/Image.h"
+
+#include "Engone/Rendering/Texture.h"
+
 #include "Tools.h"
 
 namespace studio
 {
-	const std::string basic = {
+	static const std::string basic = {
 #include "../Shaders/basic.glsl"
 	};
-	const std::string coloring = {
+	static const std::string coloring = {
 #include "../Shaders/color.glsl"
 	};
 
@@ -27,13 +33,14 @@ namespace studio
 
 	void InitAssets()
 	{
-		assets::AddFont("consolas", new Font("assets/consolas"));
-		assets::AddShader("basic",new Shader(basic));
-		assets::AddShader("color",new Shader(coloring));
-		assets::AddTexture("pencil",new Texture("assets/pencil.png"));
-		assets::AddTexture("brush",new Texture("assets/brush.png"));
-		assets::AddTexture("colorMarker",new Texture("assets/colorMarker.png"));
-
+		using namespace engone;
+		AddFont("consolas", new Font("assets/consolas"));
+		AddShader("basic",new Shader(basic,true));
+		AddShader("color",new Shader(coloring,true));
+		//std::cout << GetShader("color")->error<<"\n";
+		AddTexture("pencil",new Texture("assets/pencil.png"));
+		AddTexture("brush",new Texture("assets/brush.png"));
+		AddTexture("colorMarker",new Texture("assets/colorMarker.png"));
 	}
 	float last=0;
 	struct Drag
@@ -46,7 +53,7 @@ namespace studio
 		float delta = glfwGetTime() - last;
 		last = glfwGetTime();
 
-		overlay::UpdatePanels(delta);
+		engone::UpdatePanels(delta);
 
 		if (selectedImage != nullptr) {
 			if (selectedImage->selectedLayer != nullptr) {
@@ -64,39 +71,42 @@ namespace studio
 
 		Render();
 
-		overlay::RenderPanels();
+		engone::RenderPanels();
 
-		//overlay::GetShader().Bind();
+		/*
+		engone::Shader* shad = engone::GetShader("gui");
+		shad->Bind();
+		shad->SetVec2("uPos", { 100,100 });
+		shad->SetVec2("uSize", { 1,1 });
+		shad->SetVec4("uColor", 0.1, .1, .1, 1);
+		shad->SetInt("uTextured", 1);
 		
-		//overlay::GetShader().SetVec2("uPos", { 100,100 });
-		//overlay::GetShader().SetVec2("uSize", { 1,1 });
-		//overlay::GetShader().SetVec4("uColor", 0.5, 1, .2, 1);
-		//overlay::GetShader().SetInt("uTextured", 1);
-		
-		//renderer::DrawString(assets::GetFont("consolas"),"Hello",true,50,100,50,0);
+		engone::DrawString(engone::GetFont("consolas"),"Hello",true,50,100,50,0);
+		*/
+		//engone::DrawRect();
 
-		glfwSwapBuffers(renderer::GetWindow());
+		glfwSwapBuffers(engone::GetWindow());
 	}
 	float lastDrawX = -1, lastDrawY = -1;
 	void Init()
 	{
-		winW = renderer::Width();
-		winH = renderer::Height();
+		using namespace engone;
+		winW = Width();
+		winH = Height();
 		InitAssets();
 		history::Init();
 
-		using namespace overlay;
 		Panel* filePanel = new Panel();
 		filePanel->Left(0)->Top(0)->Width(60)->Height(25)->Color({ 1.f });
 		Transition& t = filePanel->AddTransition("a");
-		t.eventType = input::EventType::Move;
+		t.eventType = EventType::Move;
 		t.Fade({ .8f,.8f,1.f }, 0.2);
-		filePanel->AddComponent(new Text("File", assets::GetFont("consolas"), true));
+		filePanel->AddComponent(new Text("File", GetFont("consolas"), true));
 		AddPanel(filePanel);
 
 		Panel* toolPanel = new Panel();
 		toolPanel->Right(0)->CenterY(0)->Width(40)->Height(200)->Color({.8f,.9f,.9f});
-		Grid* grid = new Grid(1, 0, [](int index,input::Event& e) {
+		Grid* grid = new Grid(1, 0, [](int index,Event& e) {
 			if (index == 0) {
 				tools::SetTool(tools::ToolPencil);
 			}else if (index == 1) {
@@ -104,8 +114,8 @@ namespace studio
 			}
 			return false;
 			});
-		grid->AddItem(assets::GetTexture("pencil"));
-		grid->AddItem(assets::GetTexture("brush"));
+		grid->AddItem(GetTexture("pencil"));
+		grid->AddItem(GetTexture("brush"));
 		toolPanel->AddComponent(grid);
 		AddPanel(toolPanel);
 
@@ -166,22 +176,11 @@ namespace studio
 			float alpha = 1;
 			void Init()
 			{
-				float vert[]{
-					0,0,//1,0,0,1,
-					1,0,//1,1,1,1,
-					1,1,//0,0,0,1,
-					0,1,//0,0,0,1
-				};
-				unsigned int index[]{
-					0,1,2,
-					2,3,0
-				};
-				colorBuffer.Init(true, vert, 4 * 2, index, 6);
-				colorBuffer.SetAttrib(0, 2, 2, 0);
+
 			}
-			virtual bool Event(input::Event& e) override
+			virtual bool OnEvent(Event& e) override
 			{
-				if (e.eventType == input::EventType::Click&&e.button == GLFW_MOUSE_BUTTON_1 && e.action == 0) {
+				if (e.eventType == EventType::Click&&e.button == GLFW_MOUSE_BUTTON_1 && e.action == 0) {
 					selectedHue = false;
 					selectedFade= false;
 					selectedAlpha = false;
@@ -189,17 +188,17 @@ namespace studio
 				if (panel->Inside(e.mx,e.my)) {
 					if (fadeX<e.mx&&e.mx<fadeX+fadeW) {
 						if (fadeY < e.my && e.my<fadeY+fadeH) {
-							if (e.eventType==input::EventType::Click&&e.button == GLFW_MOUSE_BUTTON_1 && e.action == 1) {
+							if (e.eventType==EventType::Click&&e.button == GLFW_MOUSE_BUTTON_1 && e.action == 1) {
 								selectedFade = true;
 							}
 						}
 						else if (hueY < e.my && e.my<hueY+hueH) {
-							if (e.eventType == input::EventType::Click&&e.button == GLFW_MOUSE_BUTTON_1 && e.action == 1) {
+							if (e.eventType == EventType::Click&&e.button == GLFW_MOUSE_BUTTON_1 && e.action == 1) {
 								selectedHue = true;
 							}
 						}
 						else if (alphaY< e.my && e.my < alphaY+alphaH) {
-							if (e.eventType == input::EventType::Click && e.button == GLFW_MOUSE_BUTTON_1 && e.action == 1) {
+							if (e.eventType == EventType::Click && e.button == GLFW_MOUSE_BUTTON_1 && e.action == 1) {
 								selectedAlpha = true;
 							}
 						}
@@ -243,7 +242,7 @@ namespace studio
 				}
 				return false;
 			}
-			virtual void Render() override
+			virtual void OnRender() override
 			{
 				fadeX = panel->renderX+5;
 				fadeY = panel->renderY+5;
@@ -257,51 +256,53 @@ namespace studio
 				alphaY = hueY + hueH;
 				alphaW = fadeW;
 				alphaH = 20;
-				Shader* shad = assets::GetShader("color");
+				Shader* shad = engone::GetShader("color");
 				shad->Bind();
 				shad->SetVec2("uPos", {fadeX,fadeY});
 				shad->SetVec2("uSize", { fadeW,fadeH});
 				shad->SetVec2("uWindow", { winW,winH });
+
 				float f[3];
 				Hue(f,hue);
 				shad->SetVec3("uColor", { f[0],f[1],f[2]});
 				shad->SetInt("uShaderType", 0);
-				colorBuffer.Draw();
+				
+				engone::DrawRect();
 
-				//shad = assets::GetShader("hue");
-				//shad->Bind();
 				shad->SetVec2("uPos", { hueX,hueY});
 				shad->SetVec2("uSize", { hueW, hueH });
 				shad->SetInt("uShaderType", 1);
 				//shad->SetVec2("uWindow", { winW,winH });
-				colorBuffer.Draw();
+				//colorBuffer.Draw();
+				engone::DrawRect();
 
 				shad->SetVec2("uPos", { alphaX,alphaY});
 				shad->SetVec2("uSize", { alphaW,alphaH});
 				shad->SetInt("uShaderType", 2);
 				//shad->SetVec2("uWindow", { winW,winH });
-				colorBuffer.Draw();
+				//colorBuffer.Draw();
+				engone::DrawRect();
 
-				overlay::GetShader().Bind();
+				Shader* guiShader = engone::GetShader("gui");
+				guiShader->Bind();
 
-				assets::GetTexture("colorMarker")->Bind();
-				int w = assets::GetTexture("colorMarker")->GetWidth();
-				int h = assets::GetTexture("colorMarker")->GetHeight();
-				overlay::GetShader().SetInt("uTextured", 1);
-				overlay::GetShader().SetVec2("uSize", {w,h});
-				overlay::GetShader().SetVec4("uColor", 1,1,1,1);
+				engone::GetTexture("colorMarker")->Bind();
+				int w = engone::GetTexture("colorMarker")->GetWidth();
+				int h = engone::GetTexture("colorMarker")->GetHeight();
+				guiShader->SetInt("uTextured", 1);
+				guiShader->SetVec2("uSize", {w,h});
+				guiShader->SetVec4("uColor", 1,1,1,1);
 
-				overlay::GetShader().SetVec2("uPos", {fadeX+fadeW*(1-saturation)-w/2,fadeY+fadeH*(1-value)-w/2});
-				renderer::DrawRect();
+				guiShader->SetVec2("uPos", {fadeX+fadeW*(1-saturation)-w/2,fadeY+fadeH*(1-value)-w/2});
+				engone::DrawRect();
 
-				overlay::GetShader().SetVec2("uPos", { hueX+ hueW * hue-w/2,hueY + hueH/2-h/2 });
-				renderer::DrawRect();
+				guiShader->SetVec2("uPos", { hueX+ hueW * hue-w/2,hueY + hueH/2-h/2 });
+				engone::DrawRect();
 
-				overlay::GetShader().SetVec2("uPos", { alphaX + alphaW * alpha - w / 2,alphaY + alphaH / 2 - h / 2 });
-				renderer::DrawRect();
+				guiShader->SetVec2("uPos", { alphaX + alphaW * alpha - w / 2,alphaY + alphaH / 2 - h / 2 });
+				engone::DrawRect();
 			}
 		private:
-			TriangleBuffer colorBuffer;
 			float fadeX, fadeY, fadeW, fadeH;
 			float hueX, hueY, hueW, hueH;
 			float alphaX, alphaY, alphaW, alphaH;
@@ -313,10 +314,10 @@ namespace studio
 
 		Panel* propertyPanel = new Panel();
 		propertyPanel->Left(0)->Top(0, filePanel)->Width(150)->Height(60)->Color({.8f,.9f,.9f});
-		Text* sizeComp = new Text("2", assets::GetFont("consolas"), true, true);
+		Text* sizeComp = new Text("2", GetFont("consolas"), true, true);
 		propertyPanel->AddComponent(sizeComp);
-		input::AddListener(new input::Listener(input::EventType::Key|input::EventType::Scroll, [=](input::Event& e) {
-			if (e.eventType == input::EventType::Key) {
+		AddListener(new Listener(EventType::Key|EventType::Scroll, [=](Event& e) {
+			if (e.eventType == EventType::Key) {
 				if (sizeComp->isEditing) {
 					if (sizeComp->text.size() > 0) {
 						try {
@@ -328,7 +329,7 @@ namespace studio
 					}
 				}
 			}
-			else if(e.eventType==input::EventType::Scroll) {
+			else if(e.eventType==EventType::Scroll) {
 				if (propertyPanel->Inside(e.mx, e.my)) {
 					float newSize = tools::GetSize() - e.scrollY;
 					if (newSize < 0)
@@ -343,7 +344,7 @@ namespace studio
 			}));
 		AddPanel(propertyPanel);
 		
-		input::AddListener(new input::Listener(input::EventType::Key,-10, [=](input::Event& e) {
+		AddListener(new Listener(EventType::Key,-10, [=](Event& e) {
 			if (e.action==1) {
 				if (e.key==GLFW_KEY_P) {
 					tools::SetTool(tools::ToolPencil);
@@ -354,9 +355,9 @@ namespace studio
 			}
 			return false;
 			}));
-		input::AddListener(new input::Listener(input::EventType::Click | input::EventType::Move | input::EventType::Scroll,-10, [=](input::Event& e) {
+		AddListener(new Listener(EventType::Click | EventType::Move | EventType::Scroll,-10, [=](Event& e) {
 			//std::cout << e.mx << " " << e.my << " " << e.action << " " << e.button << "\n";
-			if (e.eventType == input::EventType::Click) {
+			if (e.eventType == EventType::Click) {
 				if (e.button == GLFW_MOUSE_BUTTON_1) {
 					doDraw = e.action == 1;
 				
@@ -389,7 +390,7 @@ namespace studio
 					lastmy = e.my;
 				}
 			}
-			else if (e.eventType == input::EventType::Move) {
+			else if (e.eventType == EventType::Move) {
 				if (doDraw&& selectedImage != nullptr) {
 					Layer* layer= selectedImage->selectedLayer;
 					if (selectedImage->selectedLayer != nullptr) {
@@ -424,8 +425,8 @@ namespace studio
 					lastmy = e.my;
 				}
 			}
-			else if (e.eventType == input::EventType::Scroll) {
-				if (e.scrollY == 1 || e.scrollY == -1) {
+			else if (e.eventType == EventType::Scroll) {
+				if ((int)e.scrollY  == e.scrollY) {
 					float lastZoom = zoom;
 					zoom *= (e.scrollY > 0 ? pow(1.1, abs(e.scrollY)) : pow(0.9, abs(e.scrollY)));
 					offsetX += ((e.mx - winW / 2) / zoom - (e.mx - winW / 2) / lastZoom);
@@ -438,7 +439,7 @@ namespace studio
 			}
 			return false;
 			}));
-		input::AddListener(new input::Listener(input::EventType::Resize, [=](input::Event& e) {
+		AddListener(new Listener(EventType::Resize, [=](Event& e) {
 			winW = e.width;
 			winH = e.height;
 			Tick();
@@ -499,7 +500,7 @@ namespace studio
 
 	void Render()
 	{
-		using namespace assets;
+		using namespace engone;
 		// Render images
 		GetShader("basic")->Bind();
 		GetShader("basic")->SetVec2("uOffset", {offsetX, offsetY});

@@ -3,10 +3,9 @@
 Store an image consisting of multiple layers
 */
 
-
 #include <vector>
 #include "Layer.h"
-#include "../AssetManager.h"
+#include "Engone/Handlers/AssetHandler.h"
 
 class Image
 {
@@ -31,7 +30,7 @@ public:
 	{
 		if (hidden)
 			return;
-		assets::GetShader("basic")->SetVec2("uPos", { x, y});
+		engone::GetShader("basic")->SetVec2("uPos", { x, y});
 		for (int i = 0; i < layers.size(); i++) {
 			layers[i]->Render();
 		}

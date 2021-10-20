@@ -1,32 +1,24 @@
-#define ENGONE_DEF
-#include "Engone/Rendering/Renderer.h"
-
-#define DEFINE_HANDLER
-#include "Engone/GLFWEventHandler.h"
-
-#include "Engone/Rendering/Shader.h"
+#include "DrawingStudio/Studio.h"
 
 #include <iostream>
-
-#include "Engone/UI/GraphicOverlay.h"
-
-#include "DrawingStudio/Studio.h"
 #include <chrono>
 #include <thread>
 
 int main()
 {
-	renderer::Init();
-	input::Init(renderer::GetWindow());
-	overlay::Init();
+	using namespace engone;
+	
+	InitRenderer();
+	InitEvents(GetWindow());
+	InitGUI();
 	studio::Init();
 	uint32_t milli = 1000/60;
-	while (!glfwWindowShouldClose(renderer::GetWindow())) {
+	while (!glfwWindowShouldClose(GetWindow())) {
 		uint32_t now = std::chrono::system_clock::now().time_since_epoch().count()/1000;
 		
 		studio::Tick();
 
-		input::ResetEvents();
+		ResetEvents();
 
 		glfwPollEvents();
 

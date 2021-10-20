@@ -145,14 +145,14 @@ namespace tools
 			float step2 = size/2 / normal.length();
 			vec point = normal * step;
 			vec point2 = normal2 * step2;
-			std::cout << point.y <<" "<<point2.y<<"\n";
+			//std::cout << point.y <<" "<<point2.y<<"\n";
 			//std::cout << dx<<" "<<dy << " N: "<<normal.str() << " P: " << point.str() << "\n";
 			for (int i = 1; i < abs(dx); i++) {
-				for (int j = 0; j < abs(point.y*2); j++) {
-					Pencil(layer, from.x+ point.x+ i*dir.x, from.y +dir.x*point.y + round(dir.y * i +j));
+				for (int j = 0; j < abs(point.y * 2); j++) {
+					Pencil(layer, from.x+ point.x+ i*dir.x, from.y +dir.x*point.y + (dir.y * i +j));
 				}
 				for (int j = 0; j < abs(point2.y*2); j++) {
-					Pencil(layer, from.x +point2.x+ i * dir.x, from.y +dir.x * point2.y + round(dir.y * i - j));
+					Pencil(layer, from.x +point2.x+ i * dir.x, from.y +dir.x * point2.y + (dir.y * i - j));
 				}
 			}
 		}
@@ -160,15 +160,15 @@ namespace tools
 			vec dir = { dx / abs(dy),dy / abs(dy) };
 			vec normal = { -dir.y,dir.x };
 			vec normal2 = { dir.y,-dir.x };
-			float step = (int)size / 2 / normal.length();
-			float step2 = (int)size / 2 / normal.length();
-			std::cout << step << " " << step2<<"\n";
+			float step = size / 2 / normal.length();
+			float step2 = size / 2 / normal.length();
+			//std::cout << step << " " << step2<<"\n";
 			vec point = normal * step;
 			vec point2 = normal2 * step2;
 			//std::cout << dx << " " << dy << " N: " << normal.str() << " P: " << point.str() << "\n";
 			for (int i = 1; i < abs(dy); i++) {
 				for (int j = 0; j < abs(point.x * 2); j++) {
-					Pencil(layer, from.x + round(dir.y*point.x + i * dir.x+j), from.y + point.y + dir.y * i );
+					Pencil(layer, from.x + (dir.y*point.x + i * dir.x+j), from.y + point.y + dir.y * i );
 				}
 				for (int j = 0; j < abs(point2.x * 2); j++) {
 					Pencil(layer, from.x + dir.y*point2.x + i * dir.x -j, from.y + point2.y + dir.y * i);

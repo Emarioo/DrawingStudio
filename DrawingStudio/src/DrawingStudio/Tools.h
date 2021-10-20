@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Objects/Layer.h"
-
 #include "History.h"
 
 namespace tools

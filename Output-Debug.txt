@@ -1,0 +1,58 @@
+﻿'DrawingStudio.exe' (Win32): Loaded 'D:\Development\VisualStudio\DrawingStudio\bin\Debug\Win32\DrawingStudio.exe'. Symbols loaded.
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\ntdll.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\kernel32.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\KernelBase.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\opengl32.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\user32.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\gdi32.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\shell32.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\msvcp140d.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\vcruntime140d.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\ucrtbased.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\msvcrt.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\advapi32.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\glu32.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\ddraw.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\combase.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\shlwapi.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\sechost.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\rpcrt4.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\dciman32.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\sspicli.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\cryptbase.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\bcryptprimitives.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\imm32.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\msctf.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\uxtheme.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\winmm.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\winmmbase.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\cfgmgr32.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\devobj.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\dinput8.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\XInput1_4.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\dwmapi.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\SHCore.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\hid.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\setupapi.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\wintrust.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\crypt32.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\msasn1.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\ntmarta.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\nvoglv32.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\ole32.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\wtsapi32.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\version.dll'. 
+The thread 0x2300 has exited with code 0 (0x0).
+The thread 0xa80 has exited with code 0 (0x0).
+The thread 0x239c has exited with code 0 (0x0).
+The thread 0x14ec has exited with code 0 (0x0).
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\powrprof.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\winsta.dll'. 
+'DrawingStudio.exe' (Win32): Loaded 'C:\Windows\SysWOW64\kernel.appcore.dll'. 
+The thread 0x1a80 has exited with code 0 (0x0).
+The thread 0x2674 has exited with code 0 (0x0).
+The thread 0x4678 has exited with code 0 (0x0).
+The thread 0x3ef4 has exited with code 0 (0x0).
+The thread 0x2620 has exited with code 0 (0x0).
+The thread 0x32c8 has exited with code 0 (0x0).
+The program '[3488] DrawingStudio.exe' has exited with code 0 (0x0).
