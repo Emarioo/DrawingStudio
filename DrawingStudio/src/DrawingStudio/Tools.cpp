@@ -36,11 +36,11 @@ namespace tools
 		using namespace history;
 		switch (tool) {
 		case ToolPencil:
-			//AddHistory(new DrawHistory(layer));
+			AddHistory(new DrawHistory(layer));
 			Pencil(layer, x, y);
 			break;
 		case ToolBrush:
-			//AddHistory(new DrawHistory(layer));
+			AddHistory(new DrawHistory(layer));
 			Brush(layer,x,y);
 			break;
 		}
@@ -72,9 +72,9 @@ namespace tools
 				}
 			}
 		}
-		SetColor(1, 0, 1, 1);
-		Pencil(layer, (int)(x + .5), (int)(y + .5));
-		SetColor(0, 0, 0, 1);
+		//SetColor(1, 0, 1, 1);
+		//Pencil(layer, (int)(x + .5), (int)(y + .5));
+		//SetColor(0, 0, 0, 1);
 	}
 	struct vec
 	{
@@ -132,7 +132,7 @@ namespace tools
 			return;
 		}
 
-		SetColor(1,0,0,1);
+		//SetColor(1,0,0,1);
 		if(dx==0&&abs(dy)==1||abs(dx)==1&&dy==0||dx==0&&dy==0){
 			return;
 		}
@@ -175,8 +175,8 @@ namespace tools
 				}
 			}
 		}
-		SetColor(0, 1, 1, 1);
-		Brush(layer, from.x, from.y);
+		//SetColor(0, 1, 1, 1);
+		//Brush(layer, from.x, from.y);
 		//std::cout << toX << " " << toY<<"\n";
 		Brush(layer, to.x, to.y);
 	}
@@ -187,10 +187,10 @@ namespace tools
 			return;
 		int index = y*layer->width + x;
 		
-		//history::History* hist = history::GetHistory();
-
-		//((history::DrawHistory*)hist)->AddPixel(x,y, layer->data[index * 4], layer->data[index * 4 + 1], layer->data[index * 4 + 2], layer->data[index * 4 + 3]);
-
+		history::History* hist = history::GetHistory();
+		if (hist != nullptr) {
+			((history::DrawHistory*)hist)->AddPixel(x, y, layer->data[index * 4], layer->data[index * 4 + 1], layer->data[index * 4 + 2], layer->data[index * 4 + 3]);
+		}
 		layer->data[index * 4] = red;
 		layer->data[index * 4 + 1] = green;
 		layer->data[index * 4 + 2] = blue;

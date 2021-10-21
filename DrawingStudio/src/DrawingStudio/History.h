@@ -52,7 +52,6 @@ namespace history
 
 		void AddPixel(int x,int y,unsigned char r, unsigned char g,unsigned char b,unsigned char a)
 		{
-			return;
 			if (data.size() * batchSize < written + 1) {
 				data.push_back(new Pixel[batchSize]);
 			}
@@ -64,7 +63,6 @@ namespace history
 		}
 		void Revert()
 		{
-			return;
 			//std::cout << written <<" D:"<<data.size()<< "\n";
 			while(written>0){
 				written--;

@@ -451,8 +451,8 @@ namespace studio
 		image->Init(1000, 1000);
 		images.push_back(image);
 		tools::SetSize(3);
-		tools::DragBrush(image->layers[0], 450, 450, 550, 530);
-		tools::DragBrush(image->layers[0], 400, 400, 320,500);
+		//tools::DragBrush(image->layers[0], 450, 450, 550, 530);
+		//tools::DragBrush(image->layers[0], 400, 400, 320,500);
 
 		/*
 		Image* image1 = new Image();

@@ -14,7 +14,10 @@ namespace history
 	}
 	History* GetHistory()
 	{
-		return histories.back();
+		if (histories.size() == 0)
+			return nullptr;
+		else
+			return histories.back();
 	}
 	void Init()
 	{
@@ -25,6 +28,7 @@ namespace history
 				if (IsKeyDown(GLFW_KEY_LEFT_CONTROL)) {
 					if (e.key == GLFW_KEY_Z) {
 						//DrawHistory* history = GetHistory<DrawHistory>();
+						std::cout << histories.size() << "\n";
 						if (histories.size() > 0) {
 							DrawHistory* history = (DrawHistory*)histories.back();
 							histories.pop_back();
