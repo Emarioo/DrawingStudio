@@ -1,0 +1,1 @@
+- Thin lines not showing up
