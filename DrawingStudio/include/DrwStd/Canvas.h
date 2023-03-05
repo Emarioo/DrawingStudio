@@ -34,10 +34,10 @@ public:
     void drawFromTo(float fromX, float fromY, float toX, float toY);
     
     std::vector<int> countHistory;
-    int historyIndex=-1;
-    void undo();
-    void redo();
-    void submitUndo();
+    int historyIndex=0;
+    bool undo();
+    bool redo();
+    bool submitUndo();
     
     void render(engone::LoopInfo& info);
     
@@ -54,6 +54,8 @@ public:
     bool save(const std::string& path);
     bool savePng(const std::string& path, int pixelWidth, int pixelHeight, float borders[4]);
     bool load(const std::string& path);
+    
+    void clear();
     
     float brushSize=3;
     void setBrushSize(float size);

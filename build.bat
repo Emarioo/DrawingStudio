@@ -1,11 +1,24 @@
 @echo off
 @setlocal enabledelayedexpansion
 
-SET COMPILE_OPTIONS=/DEBUG /std:c++17 /EHsc /TP /Z7 /MTd /nologo
+SET VCVARS=vcvars64.bat
+@REM SET VCVARS="C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
+
+@REM SET CONFIG="Debug"
+
+@REM Even if config isn't the libraries are built using debug options.
+
+if !CONFIG!=="Debug" (
+    SET COMPILE_OPTIONS=/DEBUG /std:c++17 /EHsc /TP /Z7 /MTd /nologo
+    SET LINK_OPTIONS=/IGNORE:4006 /DEBUG /SUBSYSTEM:CONSOLE /NOLOGO
+) else (
+    SET COMPILE_OPTIONS=/TP /std:c++17 /EHsc /MTd /O2 /nologo
+    SET LINK_OPTIONS=/IGNORE:4006 /SUBSYSTEM:WINDOWS /NOLOGO
+)
+
+SET INCLUDE_DIRS=/IDrawingStudio/include /Ilibs/GLEW/include /Ilibs/GLFW/include /Ilibs/RP3D/include
 SET DEFINITIONS=/DENGONE_PHYSICS /DENGONE_LOGGER /DENGONE_TRACKER /DENGONE_OPENGL
 SET FORCE_INCLUDES=
-SET INCLUDE_DIRS=/IDrawingStudio/include /Ilibs/GLEW/include /Ilibs/GLFW/include /Ilibs/RP3D/include
-SET LINK_OPTIONS=/DEBUG /IGNORE:4006 /NOLOGO
 SET LIBRARIES=Engone.lib
 SET LIBRARY_DIRS=
 
@@ -24,8 +37,7 @@ if exist "D:\Backup\CodeProjects\ProjectUnknown\bin\Engone\Debug-MSVC\Engone.lib
 
 set /a startTime=6000*( 100%time:~3,2% %% 100 ) + 100 * ( 100%time:~6,2% %% 100 ) + ( 100%time:~9,2% %% 100 )
 
-@REM ########### VCVARS IS HERE ##########
-call vcvars64.bat > nul
+call !VCVARS! > nul
 
 rem ######### GATHER FILES ################
 SET objdir=bin\intermediates
@@ -59,7 +71,10 @@ rem Todo: link with optimizations or debug info?
 
 set /a l_startTime=6000*( 100%time:~3,2% %% 100 ) + 100* ( 100%time:~6,2% %% 100 ) + ( 100%time:~9,2% %% 100 )
 
-link !objdir!\all_studio.o !LIBRARY_DIRS! !LIBRARIES! !LINK_OPTIONS! /SUBSYSTEM:CONSOLE /OUT:bin/DrwStd.exe
+@REM rc /?
+rc /nologo /fo bin/intermediates/resources.res DrawingStudio\resources.rc
+
+link !objdir!\all_studio.o !LIBRARY_DIRS! !LIBRARIES! !LINK_OPTIONS! bin/intermediates/resources.res /OUT:bin/DrwStd.exe
 if not %errorlevel% == 0 ( exit )
 
 set /a l_endTime=6000*(100%time:~3,2% %% 100 )+100*(100%time:~6,2% %% 100 )+(100%time:~9,2% %% 100 )

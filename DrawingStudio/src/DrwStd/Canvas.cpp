@@ -20,6 +20,7 @@ void Canvas::init(engone::Window* window){
     if(!shader){
         shader = new engone::Shader(particleGLSL);
     }
+    countHistory.push_back(0);
     
     // for(int i=0;i<1000;i++){
     //     float x = i%100;
@@ -285,6 +286,7 @@ bool Canvas::load(const std::string& path){
         needsRefresh=true;
         particleCount = fileSize/sizeof(Particle);
         countHistory.clear();
+        countHistory.push_back(particleCount);
         bool yes = FileRead(file,particles,fileSize);
         FileClose(file);
         return true;
@@ -301,30 +303,42 @@ void Canvas::setBrushColor(Color color){
 void Canvas::setBackgroundColor(Color color){
     backgroundColor = color;
 }
-void Canvas::undo(){
-    if(historyIndex==-1) return;
+bool Canvas::undo(){
+    if(historyIndex==0) return false;
     
-    particleCount = countHistory[historyIndex];
     historyIndex--;
-    
-    // int num = countHistory.back();
-    // particleCount = num;
-    // countHistory.erase(countHistory.begin()+countHistory.size()-1);   
+    particleCount = countHistory[historyIndex];
+    // engone::log::out << "UNDO index "<<historyIndex << " "<<particleCount<<"\n";
+    return true;
 }
-void Canvas::redo(){
-    if(historyIndex==countHistory.size()-1) return;
+bool Canvas::redo(){
+    if(historyIndex==countHistory.size()-1) return false;
     
     historyIndex++;
     particleCount = countHistory[historyIndex];
+    // engone::log::out << "REDO index "<<historyIndex << " "<<particleCount<<"\n";
+    return true;
 }
-void Canvas::submitUndo(){
+bool Canvas::submitUndo(){
     // do nothing if particle count is the same as last time
-    if(!countHistory.empty())
-        if(particleCount==countHistory.back())
-            return;
+    if(particleCount==countHistory.back())
+        return false;
     
-    countHistory.push_back(particleCount);
     historyIndex++;
+    if(countHistory.size()==historyIndex)
+        countHistory.push_back(particleCount);
+    else{
+        countHistory.resize(historyIndex+1);
+        countHistory[historyIndex] = particleCount;
+    }
+    // engone::log::out << "SUBMIT index "<<historyIndex << " "<<particleCount<<"\n";
+    return true;
+}
+void Canvas::clear(){
+    particleCount = 0;
+    historyIndex=0;
+    countHistory.resize(1);
+    countHistory[0]=particleCount;
 }
 void Canvas::pruneAlgorithm(){
     int popped=0;

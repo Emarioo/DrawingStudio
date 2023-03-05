@@ -1,6 +1,6 @@
-
-# API for customizing shader?
-You can do rainbow stuff with each pixel.
+# Project things
+- [x] Bake text font and marker.png into the executable. **Note:** Done with MSVC Resource compiler.
+- [ ] Setup a configuration for release build. **Note:** Somewhat done but the libraries also needs to be compiled with release configs.
 
 # Other design
 - Undecorated window. Looks cooler.
@@ -11,14 +11,15 @@ You can do rainbow stuff with each pixel.
 - Multiple saved brushes so you can quickly switch colors and sizes.
 - Line tool which uses the brush functionality.
 - Eraser, 1.5 times bigger than brush?
-- Change background color
 - Save as png. You get to define a rectangle where particles inside are saved to the image. You can also define the precision (matters if you zoomed out and drew stuff but don't want to get a 30000x30000 image). You may also define pixel width and height. With this you can "squish" the image into odd aspect ratio. You can also use a fixed ratio where either the rectangle height or image height changes. ALSO, when saving, run compression algorithms.
 - When loading, you should get a list of choices. Very quick to load a drawing. You can also manually type in a path.
-- Start color themes. Black/White, White/Dark Blue...
+- Some what random starting color themes. They are chosen from a set of good looking themes.
 - Layers, it should be easy to switch between them. like a popup menu beside your cursor.
 - Keybindings
-- Redo key (CTRL+Z). Instead of removing entries in history you decrement an index. Redo would increment the index. If you make a change then entries after the index would be deleted.
-- Autosave and auto load last drawing? autosave.drw
+- [ ] Quick color panel menu instead of bottom left? Maybe same with brushes?
+- [x] Change background color
+- [x] Redo key (CTRL+Z). Instead of removing entries in history you decrement an index. Redo would increment the index. If you make a change then entries after the index would be deleted.
+- [x] Autosave and auto load last drawing? autosave.drw
 - [x] Ctrl+Z, remove particles from the back of the buffer.
 - [x] Change brush size
 - [x] Change brush color.

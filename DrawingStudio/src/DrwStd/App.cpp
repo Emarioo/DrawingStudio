@@ -1,14 +1,14 @@
 #include "DrwStd/App.h"
 #include "Engone/Utilities/Utilities.h"
 
+#include "DrwStd/resource.h"
+
 static const char* basic = {
 #include "DrwStd/Shaders/basic.glsl"
 	};
-	static const char* colorGLSL = {
+static const char* colorGLSL = {
 #include "DrwStd/Shaders/color.glsl"
 	};
-
-#include "Engone/Tests/BasicRendering.h"
 
 App::App(engone::Engone* engone) : Application(engone) {
     using namespace engone;
@@ -16,12 +16,14 @@ App::App(engone::Engone* engone) : Application(engone) {
     mainWindow->setTitle("For coders, by coders");
     AssetStorage* as = mainWindow->getStorage();
     as->setRoot("../DrawingStudio/assets/");
-    as->load<FontAsset>("consolas");
+    // as->load<FontAsset>("consolas42");
+    // as->load<TextureAsset>("colorMarker");
+    
+    // as->set<FontAsset>("consolas42",new FontAsset(IDB_PNG1,"4\n35"));
+    as->set<FontAsset>("consolas",new FontAsset(IDB_PNG1,"4\n35"));
+    as->set<TextureAsset>("colorMarker",new TextureAsset(IDB_PNG2));
     
     as->set<ShaderAsset>("basic",new ShaderAsset(basic));
-    
-    as->load<TextureAsset>("colorMarker");
-    
     hueShader = new Shader(colorGLSL);
     
     canvas.init(mainWindow);
@@ -70,7 +72,7 @@ App::App(engone::Engone* engone) : Application(engone) {
             }
         }
         else if (e.eventType == EventScroll) {
-            if(mainWindow->isKeyDown(GLFW_KEY_LEFT_CONTROL)){
+            if(mainWindow->isKeyDown(GLFW_KEY_LEFT_CONTROL)||mainWindow->isKeyDown(GLFW_MOUSE_BUTTON_2)){
                 if ((int)e.scrollY  == e.scrollY) {
                     float lastZoom = canvas.zoomFactor;
                     canvas.zoomFactor *= (e.scrollY > 0 ? pow(1.1, abs(e.scrollY)) : pow(0.9, abs(e.scrollY)));
@@ -106,8 +108,12 @@ void App::Input(engone::LoopInfo& info){
     if(info.window->isKeyDown(GLFW_KEY_LEFT_CONTROL) && info.window->isKeyPressed(GLFW_KEY_R)){
         canvas.redo();
     }
-    if(info.window->isKeyDown(GLFW_KEY_LEFT_CONTROL) && info.window->isKeyPressed(GLFW_KEY_P)){
-        canvas.pruneAlgorithm();
+    // Note: prune doesn't work yet
+    // if(info.window->isKeyDown(GLFW_KEY_LEFT_CONTROL) && info.window->isKeyPressed(GLFW_KEY_P)){
+    //     canvas.pruneAlgorithm();
+    // }
+    if(info.window->isKeyDown(GLFW_KEY_LEFT_CONTROL)&&info.window->isKeyDown(GLFW_KEY_LEFT_SHIFT) && info.window->isKeyPressed(GLFW_KEY_N)){
+        canvas.clear();
     }
 }
 
@@ -258,15 +264,16 @@ void App::renderHue(engone::LoopInfo& info, float x, float y, float w, float h){
     }
     
     if (promptType==SELECT_FADE) {
+        const float floatMin=0.001; // 1.0 is converted to 0.0. The markers will jump to some default position
         saturation = 1-(mx - fadeX) / (fadeW);
         value = 1-(my - fadeY) / (fadeH);
-        if (saturation < 0)
-            saturation = 0;
+        if (saturation < floatMin)
+            saturation = floatMin;
         if (saturation > 1) {
             saturation = 1;
         }
-        if (value < 0)
-            value = 0;
+        if (value < floatMin)
+            value = floatMin;
         if (value > 1) {
             value = 1;
         }
@@ -302,8 +309,8 @@ void App::renderHue(engone::LoopInfo& info, float x, float y, float w, float h){
     float th = mark0.texture->getHeight();
     mark0.x = fadeX+fadeW*(1-saturation)-tw/2;
     mark0.y = fadeY+fadeH*(1-value)-tw/2;
-    mark0.w = tw;
-    mark0.h = th;
+    mark0.w = tw+1;
+    mark0.h = th+1;
     mark0.rgba = {1,1,1,1};
     ui::Draw(mark0);
     
@@ -325,29 +332,6 @@ void App::render(engone::LoopInfo& info) {
     glClearColor(canvas.backgroundColor.r,canvas.backgroundColor.g,canvas.backgroundColor.b,canvas.backgroundColor.a);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     
-    // if(info.window->isKeyPressed(GLFW_MOUSE_BUTTON_1)){
-    
-    //     lastmx = info.window->getMouseX();
-    //     lastmy = info.window->getMouseY();
-    //     if(promptType==0){
-    //         doDraw = true;
-    //         canvas.submitUndo();
-    //         canvas.drawPixel(lastmx,lastmy);
-    //     }
-    // }else if(info.window->isKeyPressed(GLFW_MOUSE_BUTTON_3)){
-    //     lastmx = info.window->getMouseX();
-    //     lastmy = info.window->getMouseY();
-    //     if(promptType==0){
-    //         move = true;
-    //     }
-    // }
-    // if(info.window->isKeyReleased(GLFW_MOUSE_BUTTON_1)){
-    //     doDraw = false;   
-    // }
-    // if(info.window->isKeyReleased(GLFW_MOUSE_BUTTON_3)){
-    //     move=false;   
-    // }
-    
     FontAsset* consolas = info.window->getStorage()->get<FontAsset>("consolas");
     
     ui::TextBox toolType={"Size: "+std::to_string((int)canvas.brushSize),0,0,20,consolas,textColor};
@@ -363,7 +347,7 @@ void App::render(engone::LoopInfo& info) {
     ui::Draw(zoomText);
     
     ui::TextBox partText={"Pixels: "+std::to_string(canvas.particleCount)+"/"+std::to_string(canvas.maxParticles),0,0,20,consolas,textColor};
-    partText.x=300;
+    partText.x=info.window->getWidth()/2-partText.getWidth()/2;
     partText.y=5;
     ui::Draw(partText);
     
@@ -522,10 +506,6 @@ void App::render(engone::LoopInfo& info) {
     shader->setVec2("uOffset", {canvas.offsetX, canvas.offsetY});
     shader->setVec2("uTransform", {canvas.zoomFactor / info.window->getWidth(), canvas.zoomFactor /info.window->getHeight()});
 
-    // for (int i = 0; i < images.size();i++) {
-    //     images[i]->Render(info);
-    // }
-    
     float colorPickerHeight=info.window->getHeight()*.3;
     float colorPickerWidth=info.window->getWidth()*.3;
     if(colorPickerHeight>200)
@@ -538,27 +518,67 @@ void App::render(engone::LoopInfo& info) {
         colorPickerWidth=80;
     int hueY = sh-colorPickerHeight;
     
+    ui::Color boxColor = {0.05,0.05,0.3,0.7};
+    ui::Color hoverBoxColor = {0.05,0.15,0.4,0.7};
+    ui::Color lightBoxColor = {0.15,0.3,0.5,0.7};
+    
+    ui::Box brushBox = {0,0,0,0};
     ui::TextBox brushText={"Brush ",0,0,25,consolas,textColor};
-    brushText.x = 0;
-    brushText.y = hueY-brushText.h;
+    
+    ui::Box backBox = {};
+    ui::TextBox backText={"Background",0,0,25,consolas,textColor};
+    
+    
+    brushBox.w = brushText.getWidth()+6;
+    brushBox.h = brushText.getHeight()+6;
+    backBox.w = backText.getWidth()+6;
+    backBox.h = backText.getHeight()+6;
+    
+    backBox.x = 0;
+    brushBox.x = 0;
+    if(pickColorType==PICK_COLOR_BACKGROUND){
+        backBox.y = hueY-backText.h-6;
+        brushBox.y = backBox.y - backBox.h;
+    }else {
+        brushBox.y = hueY-brushText.h-6;
+        backBox.y = brushBox.y - brushBox.h;
+    }
+    
+    backText.x = backBox.x + 3;
+    backText.y = backBox.y + 3;
+    brushText.x = brushBox.x+3;
+    brushText.y = brushBox.y+3;
+    
+    brushBox.rgba = boxColor;
+    backBox.rgba = boxColor;
     if(pickColorType==PICK_COLOR_BRUSH){
         brushText.rgba = highTextColor;  
+        brushBox.rgba = lightBoxColor;
+    } else if(ui::Hover(brushBox)){
+        brushBox.rgba = hoverBoxColor;
     }
-    ui::Draw(brushText);
-    
-    ui::TextBox backText={"Background",0,0,25,consolas,textColor};
-    backText.x = brushText.x+brushText.getWidth();
-    backText.y = brushText.y;
-     if(pickColorType==PICK_COLOR_BACKGROUND){
+    if(pickColorType==PICK_COLOR_BACKGROUND){
         backText.rgba = highTextColor;  
+        backBox.rgba = lightBoxColor;
+    } else if(ui::Hover(backBox)){
+        backBox.rgba = hoverBoxColor;
     }
+    
+    ui::Draw(brushBox);
+    ui::Draw(brushText);
+    ui::Draw(backBox);
     ui::Draw(backText);
     
-    if(ui::Clicked(brushText)==1){
-        pickColorType = PICK_COLOR_BRUSH;   
-    } else if(ui::Clicked(backText)==1){
-        pickColorType = PICK_COLOR_BACKGROUND;   
+    if(ui::Clicked(brushBox)==1){
+        pickColorType = PICK_COLOR_BRUSH;
+        if(promptType==0) // click from user was handled -> disable drawing
+            promptType=-1;
+    } else if(ui::Clicked(backBox)==1){
+        pickColorType = PICK_COLOR_BACKGROUND;
+        if(promptType==0) // click from user was handled -> disable drawing
+            promptType=-1;
     }
+    
     canvas.render(info);
     renderHue(info,0,hueY,colorPickerWidth,colorPickerHeight);
     
@@ -568,7 +588,6 @@ void App::render(engone::LoopInfo& info) {
         lastmy = info.window->getMouseY();
         if(promptType==0){
             doDraw = true;
-            canvas.submitUndo();
             canvas.drawPixel(lastmx,lastmy);
         }
     }else if(info.window->isKeyPressed(GLFW_MOUSE_BUTTON_3)){
@@ -579,11 +598,15 @@ void App::render(engone::LoopInfo& info) {
         }
     }
     if(info.window->isKeyReleased(GLFW_MOUSE_BUTTON_1)){
+        if(doDraw)
+            canvas.submitUndo();
         doDraw = false;   
     }
     if(info.window->isKeyReleased(GLFW_MOUSE_BUTTON_3)){
         move=false;   
     }
+    if(promptType==-1)
+        promptType=0;
 }
 
 void App::onClose(engone::Window* window){
