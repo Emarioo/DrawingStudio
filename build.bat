@@ -4,7 +4,7 @@
 SET VCVARS=vcvars64.bat
 @REM SET VCVARS="C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
 
-@REM SET CONFIG="Debug"
+SET CONFIG="Debug"
 
 @REM Even if config isn't the libraries are built using debug options.
 
@@ -91,3 +91,7 @@ set /a finS2=(endTime-startTime)%%100
 echo Compilation in %c_finS%.%c_finS2% seconds
 echo Linking in %l_finS%.%l_finS2% seconds
 echo Finished in %finS%.%finS2% seconds
+
+pushd bin
+start DrwStd.exe
+popd

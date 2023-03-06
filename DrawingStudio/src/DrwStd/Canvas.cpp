@@ -193,7 +193,8 @@ bool Canvas::save(const std::string& path){
     using namespace engone;
     auto file = FileOpen(path,0,FILE_WILL_CREATE);
     if(file){
-        bool yes = FileWrite(file,particles,particleCount*sizeof(Particle));
+        bool yes = FileWrite(file,&backgroundColor,sizeof(backgroundColor));
+        yes = FileWrite(file,particles,particleCount*sizeof(Particle));
         FileClose(file);
         return true;
     }else{
@@ -207,11 +208,6 @@ bool Canvas::savePng(const std::string& path, int pixelWidth, int pixelHeight, f
     float by = borders[0];
     float w = borders[1]-borders[3];
     float h = borders[0]-borders[2];
-    
-    // Todo: auto tune width and height to some appropriate values
-    // pixelWidth = 100;
-    // pixelHeight = 100;
-    
     
     float maxWidth = 2000;
     float maxHeight = 2000;
@@ -231,8 +227,7 @@ bool Canvas::savePng(const std::string& path, int pixelWidth, int pixelHeight, f
     uint8* rawdata = (uint8*)Allocate(4*pixelCount);
     if(!rawdata) return false;
     
-    Color background = {0,0.5,1,1};
-    Pixel pback = ColorToPixel(background);
+    Pixel pback = ColorToPixel(backgroundColor);
     for(int i=0;i<pixelCount;i++){
         *(rawdata+i*4+0) = pback.r;
         *(rawdata+i*4+1) = pback.g;
@@ -272,8 +267,9 @@ bool Canvas::load(const std::string& path){
     uint64 fileSize;
     auto file = FileOpen(path,&fileSize,FILE_ONLY_READ);
     
-    uint64 newParticles = fileSize/sizeof(Particle) + 10000;// plus some extra to delay the next reallocation
     if(file){
+        particleCount = (fileSize-sizeof(backgroundColor))/sizeof(Particle);
+        uint64 newParticles = particleCount + 10000;// plus some extra to delay the next reallocation
         if(maxParticles<newParticles){
             Particle* data = (Particle*)engone::Reallocate(particles,maxParticles*sizeof(Particle),newParticles*sizeof(Particle));
             if(!data){
@@ -284,10 +280,10 @@ bool Canvas::load(const std::string& path){
             maxParticles = newParticles;
         }
         needsRefresh=true;
-        particleCount = fileSize/sizeof(Particle);
         countHistory.clear();
         countHistory.push_back(particleCount);
-        bool yes = FileRead(file,particles,fileSize);
+        bool yes = FileRead(file,&backgroundColor,sizeof(backgroundColor));
+        yes = FileRead(file,particles,fileSize-sizeof(backgroundColor));
         FileClose(file);
         return true;
     }else{

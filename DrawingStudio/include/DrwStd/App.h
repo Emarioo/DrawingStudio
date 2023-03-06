@@ -23,6 +23,10 @@ public:
     float last=0;
     float lastDrawX = -1, lastDrawY = -1;
     
+    float maximumZoom=500;
+    
+    // float winCoords[4];
+    
     engone::Shader* hueShader=0;
     
     static const int PICK_COLOR_BRUSH=0;

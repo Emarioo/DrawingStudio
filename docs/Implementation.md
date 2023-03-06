@@ -1,6 +1,6 @@
 The project is heavily based on optimization. That is because you very much do not want a slow or laggy program when designing.
 
-Memory management will be very important. A base allocator for all memory may be important.
+Memory management will be very important. Actually just using one large array of particles seems to be fine
 
 # Particles
 Each pixel you draw is a particle with position and color. You can draw any where!

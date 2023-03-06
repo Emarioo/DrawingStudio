@@ -16,11 +16,11 @@ App::App(engone::Engone* engone) : Application(engone) {
     mainWindow->setTitle("For coders, by coders");
     AssetStorage* as = mainWindow->getStorage();
     as->setRoot("../DrawingStudio/assets/");
-    // as->load<FontAsset>("consolas42");
-    // as->load<TextureAsset>("colorMarker");
     
-    // as->set<FontAsset>("consolas42",new FontAsset(IDB_PNG1,"4\n35"));
-    as->set<FontAsset>("consolas",new FontAsset(IDB_PNG1,"4\n35"));
+    // Loading twice, very dumb, but engine is dumb so it's fine.
+    as->set<FontAsset>("default",new FontAsset(IDB_PNG1,"4\n35"));
+    as->set<FontAsset>("fonts/consolas42",new FontAsset(IDB_PNG1,"4\n35"));
+    
     as->set<TextureAsset>("colorMarker",new TextureAsset(IDB_PNG2));
     
     as->set<ShaderAsset>("basic",new ShaderAsset(basic));
@@ -77,9 +77,10 @@ App::App(engone::Engone* engone) : Application(engone) {
                     float lastZoom = canvas.zoomFactor;
                     canvas.zoomFactor *= (e.scrollY > 0 ? pow(1.1, abs(e.scrollY)) : pow(0.9, abs(e.scrollY)));
                     
-                    // Any more zoom will allow you to see the space between particles.
-                    // if(canvas.zoomFactor>1)
-                    //     canvas.zoomFactor=1;
+                    if(1/canvas.zoomFactor<1)
+                        canvas.zoomFactor=1;
+                    if(1/canvas.zoomFactor>maximumZoom)
+                        canvas.zoomFactor=1/maximumZoom;
                         
                     canvas.offsetX += ((e.mx - mainWindow->getWidth() / 2) / canvas.zoomFactor - (e.mx - mainWindow->getWidth() / 2) / lastZoom);
                     canvas.offsetY -= ((e.my - mainWindow->getHeight() / 2) / canvas.zoomFactor - (e.my - mainWindow->getHeight() / 2) / lastZoom);
@@ -90,7 +91,11 @@ App::App(engone::Engone* engone) : Application(engone) {
                 }
             }else{
                 float size = canvas.brushSize;
-                size = size + e.scrollY;
+                if(size>10){
+                    size *= (e.scrollY > 0 ? pow(1.05, abs(e.scrollY)) : pow(0.95, abs(e.scrollY)));
+                }else{
+                    size = size + e.scrollY;
+                }
                 if(size<1) size = 1;
                 canvas.setBrushSize(size);
             }
@@ -114,6 +119,22 @@ void App::Input(engone::LoopInfo& info){
     // }
     if(info.window->isKeyDown(GLFW_KEY_LEFT_CONTROL)&&info.window->isKeyDown(GLFW_KEY_LEFT_SHIFT) && info.window->isKeyPressed(GLFW_KEY_N)){
         canvas.clear();
+    }
+    if(info.window->isKeyDown(GLFW_KEY_LEFT_ALT)&&info.window->isKeyPressed(GLFW_KEY_F4)){
+        stop();
+    }
+    if(info.window->isKeyDown(GLFW_KEY_LEFT_ALT)&&info.window->isKeyPressed(GLFW_KEY_ENTER)){
+        mainWindow->maximize(!(mainWindow->getX() == 0 && mainWindow->getY() >= 0 && mainWindow->getY() < 100));
+        //if(mainWindow->getX()==0&&mainWindow->getY()>=0&&mainWindow->getY()<100){
+        //    mainWindow->setPosition(winCoords[0],winCoords[1]);
+        //    mainWindow->setSize(winCoords[2],winCoords[3]);
+        //}else{
+        //    winCoords[0] = mainWindow->getX();
+        //    winCoords[1] = mainWindow->getY();
+        //    winCoords[2] = mainWindow->getWidth();
+        //    winCoords[3] = mainWindow->getHeight();
+        //    mainWindow->maximize();
+        //}
     }
 }
 
@@ -332,19 +353,19 @@ void App::render(engone::LoopInfo& info) {
     glClearColor(canvas.backgroundColor.r,canvas.backgroundColor.g,canvas.backgroundColor.b,canvas.backgroundColor.a);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     
-    FontAsset* consolas = info.window->getStorage()->get<FontAsset>("consolas");
-    
-    ui::TextBox toolType={"Size: "+std::to_string((int)canvas.brushSize),0,0,20,consolas,textColor};
-    toolType.y=5;
-    toolType.x=5;
-    ui::Draw(toolType);
+    FontAsset* consolas = info.window->getStorage()->get<FontAsset>("default");
     
     char zoomT[30];
-    sprintf(zoomT,"Zoom: %.1f",1/canvas.zoomFactor);
+    sprintf(zoomT,"Inverse Zoom: %.1f",1/canvas.zoomFactor);
     ui::TextBox zoomText={zoomT,0,0,20,consolas,textColor};
-    zoomText.y=toolType.h+toolType.y;
+    zoomText.y=5;
     zoomText.x=5;
     ui::Draw(zoomText);
+    
+    ui::TextBox toolType={"Size: "+std::to_string((int)canvas.brushSize),0,0,20,consolas,textColor};
+    toolType.y=zoomText.y+zoomText.h;
+    toolType.x=zoomText.x;
+    ui::Draw(toolType);
     
     ui::TextBox partText={"Pixels: "+std::to_string(canvas.particleCount)+"/"+std::to_string(canvas.maxParticles),0,0,20,consolas,textColor};
     partText.x=info.window->getWidth()/2-partText.getWidth()/2;
@@ -354,12 +375,12 @@ void App::render(engone::LoopInfo& info) {
     char mem[10];
     FormatBytes(mem,10,canvas.getUsedMemory());
     ui::TextBox memText={mem,0,0,20,consolas,textColor};
-    memText.x=info.window->getWidth()-memText.getWidth()-5;
-    memText.y=5;
+    memText.x=toolType.x;
+    memText.y=toolType.y+toolType.h;
     ui::Draw(memText);
     
-    ui::TextBox historyText={"Undo: "+std::to_string(canvas.countHistory.size()),0,0,20,consolas,textColor};
-    historyText.x=info.window->getWidth()-historyText.getWidth()-5;
+    ui::TextBox historyText={"History: "+std::to_string(canvas.countHistory.size()),0,0,20,consolas,textColor};
+    historyText.x=memText.x;
     historyText.y=memText.y+memText.h;
     ui::Draw(historyText);
     
@@ -395,8 +416,10 @@ void App::render(engone::LoopInfo& info) {
     float sw = info.window->getWidth();
     float sh = info.window->getHeight();
     
+    float promptHeight = info.window->getHeight()*0.05f;
+    
     if(promptType==PROMPT_DEPICT_SAVE){
-        ui::TextBox saveText = {"Save path?",0,0,30,consolas,promptColor};
+        ui::TextBox saveText = {"Save path?",0,0,promptHeight,consolas,promptColor};
         saveText.x = sw/2-saveText.getWidth()/2;
         saveText.y = sh/3;
         
@@ -434,7 +457,7 @@ void App::render(engone::LoopInfo& info) {
     }
     
     if(promptType==PROMPT_SAVE){
-        ui::TextBox saveText = {"Save path?",0,0,30,consolas,promptColor};
+        ui::TextBox saveText = {"Save path?",0,0,promptHeight,consolas,promptColor};
         saveText.x = sw/2-saveText.getWidth()/2;
         saveText.y = sh/3;
         
@@ -461,7 +484,7 @@ void App::render(engone::LoopInfo& info) {
         saveLoadPath.text = oldtxt;
     }
     if(promptType==PROMPT_LOAD){
-        ui::TextBox loadText = {"Load path?",0,0,30,consolas,promptColor};
+        ui::TextBox loadText = {"Load path?",0,0,promptHeight,consolas,promptColor};
         loadText.x = sw/2-loadText.getWidth()/2;
         loadText.y = sh/3;
         
@@ -489,8 +512,8 @@ void App::render(engone::LoopInfo& info) {
     
     if(notifyTime>0){
         notification.h = 20;
-        notification.x = 5;
-        notification.y = sh-notification.h;
+        notification.x = sw-notification.getWidth()-5;
+        notification.y = sh-notification.h-5;
         if(notifyTime<0.5)
             notification.rgba.a = notifyTime/0.5;
         notification.font = consolas;
@@ -593,9 +616,9 @@ void App::render(engone::LoopInfo& info) {
     }else if(info.window->isKeyPressed(GLFW_MOUSE_BUTTON_3)){
         lastmx = info.window->getMouseX();
         lastmy = info.window->getMouseY();
-        if(promptType==0){
+        // if(promptType==0){
             move = true;
-        }
+        // }
     }
     if(info.window->isKeyReleased(GLFW_MOUSE_BUTTON_1)){
         if(doDraw)

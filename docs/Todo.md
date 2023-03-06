@@ -1,10 +1,9 @@
 # Project things
 - [x] Bake text font and marker.png into the executable. **Note:** Done with MSVC Resource compiler.
 - [ ] Setup a configuration for release build. **Note:** Somewhat done but the libraries also needs to be compiled with release configs.
-
-# Other design
-- Undecorated window. Looks cooler.
-- Transparent window. Drawing ontop of a text editor is cool.
+- [ ] Fix icon for executable.
+- [ ] Undecorated window. Looks cooler.
+- [ ] Transparent window. Drawing ontop of a text editor is cool.
 
 # Features
 - Help information
@@ -27,9 +26,20 @@
 # Special features
 - Grid generation. As a programmer you usually use grids when explaining certain things. Not having to draw the grid every time would be convenient.
 
+# Other
+- Error checking when reading writing files.
+- [ ] Bug with 2000 brush size, and zooming in a lot? the big particle disappears oddly? something to do with gl_PointSize in shader?
+- [x] Fix fps counter
+- [x] Save/Load text should change size depending on window size.
+- [x] Increment/Decrement brush size faster. Same expontial as zooming?
+- [x] Can't move when exporting png/saving image and such.
+- [x] Save background color with .drw.
+- [x] Notification text move to right side.
+
 # Optimizations
 - Prune algorithm which deletes duplicate particles. This can run on a few threads and on a part of the buffer. When pruning holes in the buffer will be left from the removed particles. They should be filled but how? Moving particles from the back would invalidate Ctrl+Z.
 - Compress algorithm when saving data to disk. Each particle has position and color. Instead you can save positions for each color. White may have 1023 positions. Blue has 99. This saves 16 bytes for each particle (4x floats for each color). You can compress a block of particles.
 - Quad tree for the particles?
 - Set a maximum zoom. A drag draw zoomed out draws many more particles then zoomed in. Too far out would generate kilobytes of particles per frame.
 - Enable GL_PROGRAM_POINT_SIZE and give each particle a size. Draw one large particle instead of many small ones. Enable GL_POINT_SMOOTH for rounded points (smoothing doesn't work, maybe i have old PC?).
+- Performance problems with high zoom and small brush size. Can be fixed a little bit by having multiple shaders buffers, multiple allocations instead of one large. Some multithreading on some parts? I don't think this will solve the real issue though. There will still be a limit. What you should do is set a maximum zoom. Maybe an option when launching the program do disable all limits?
