@@ -80,6 +80,9 @@ public:
     float offsetX=0;
     float offsetY=0;
     
+    float pngMaxWidth = 2000;
+    float pngMaxHeight = 2000;
+    
     // outBorders is a list with top, right, bottom, left
     void computeBorder(float outBorders[4]);
     

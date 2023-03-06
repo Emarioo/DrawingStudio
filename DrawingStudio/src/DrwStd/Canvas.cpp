@@ -209,17 +209,14 @@ bool Canvas::savePng(const std::string& path, int pixelWidth, int pixelHeight, f
     float w = borders[1]-borders[3];
     float h = borders[0]-borders[2];
     
-    float maxWidth = 2000;
-    float maxHeight = 2000;
-    
     pixelWidth = w;
     pixelHeight = h;
-    if(pixelWidth>maxWidth){    
-        pixelWidth = maxWidth;
+    if(pixelWidth>pngMaxWidth){    
+        pixelWidth = pngMaxWidth;
         pixelHeight = pixelWidth*h/w;
     }
-    if(pixelHeight>maxHeight){
-        pixelHeight = maxHeight;
+    if(pixelHeight>pngMaxHeight){
+        pixelHeight = pngMaxHeight;
         pixelWidth = pixelHeight*w/h;   
     }
     

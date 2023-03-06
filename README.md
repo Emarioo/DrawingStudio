@@ -25,6 +25,7 @@ At the very least high brush size with high zoom.
 First you need to have Visual Studio installed.
 Then you need to find vcvars64.bat which is usually located in:
 `C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat`
+
 VCVARS in build.bat should point to your version of vcvars64.bat.
 
 Running build.bat will compile the project with debug options.

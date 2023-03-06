@@ -46,6 +46,7 @@ public:
     };
     
     engone::ui::TextBox saveLoadPath{};
+    engone::ui::TextBox maximumSizeText{};
     static const int PROMPT_SAVE=1;
     static const int PROMPT_LOAD=2;
     static const int PROMPT_DEPICT=3;
@@ -55,6 +56,12 @@ public:
     static const int SELECT_ALPHA=7;
     void switchState(int state);
     int promptType=0;
+    
+    int selectedEdgeX=0;
+    int selectedEdgeY=0;
+    
+    float selectedOffsetX=0;
+    float selectedOffsetY=0;
     
     engone::ui::Color successColor = {0.01,1,0.04,1}; 
     engone::ui::Color failColor = {1,0.04,0.01,1};

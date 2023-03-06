@@ -346,6 +346,8 @@ void App::renderHue(engone::LoopInfo& info, float x, float y, float w, float h){
 void App::switchState(int state){
     promptType = state;
     saveLoadPath.editing=true;
+    selectedEdgeX=0;
+    selectedEdgeY=0;
 }
 void App::render(engone::LoopInfo& info) {
     using namespace engone;
@@ -419,20 +421,64 @@ void App::render(engone::LoopInfo& info) {
     float promptHeight = info.window->getHeight()*0.05f;
     
     if(promptType==PROMPT_DEPICT_SAVE){
-        ui::TextBox saveText = {"Save path?",0,0,promptHeight,consolas,promptColor};
+        ui::TextBox saveText = {"Export path?",0,0,promptHeight,consolas,promptColor};
+        ui::TextBox sizeText = {"Maximum size (ex, 123x456 or 200)",0,0,promptHeight,consolas,promptColor};
         saveText.x = sw/2-saveText.getWidth()/2;
         saveText.y = sh/3;
         
-        ui::Edit(&saveLoadPath,true);
+        if(maximumSizeText.text=="" && !maximumSizeText.editing){
+            maximumSizeText.text = std::to_string((int)canvas.pngMaxWidth)+"x"+std::to_string((int)canvas.pngMaxHeight);
+        }
+        
+        if(saveLoadPath.editing){
+            ui::Edit(&saveLoadPath,true);
+            maximumSizeText.editing=false;
+        }
         std::string oldtxt = saveLoadPath.text;
         saveLoadPath.text = saveLoadPath.text + ".png";
-        if(!saveLoadPath.editing){
+        if(maximumSizeText.editing){
+            ui::Edit(&maximumSizeText,true);
+        }
+        
+        if(info.window->isKeyPressed(GLFW_KEY_TAB)){
+            if(saveLoadPath.editing){
+                maximumSizeText.editing=true;
+                saveLoadPath.editing=false;
+            }else{
+                maximumSizeText.editing=false;
+                saveLoadPath.editing=true;
+            }
+        }
+        
+        if(info.window->isKeyPressed(GLFW_KEY_ENTER)){
+            maximumSizeText.editing=false;
             switchState(0);
-            bool yes = canvas.savePng(saveLoadPath.text,0,0,depictionBorders); // Todo: saving can take time. Frame will drop.
-            if(yes)
-                notify("Saved '"+saveLoadPath.text+"'",successColor);
-            else
-                notify("Could not save '"+saveLoadPath.text+"'",failColor);
+            
+            auto list = SplitString(maximumSizeText.text,"x");
+            bool good=true;
+            try {
+                if(list.size()==2){
+                    canvas.pngMaxWidth = std::stoi(list[0]);    
+                    canvas.pngMaxHeight = std::stoi(list[1]);    
+                }else if(list.size()==1){
+                    canvas.pngMaxWidth = std::stoi(list[0]);    
+                    canvas.pngMaxHeight = canvas.pngMaxWidth;    
+                }else{
+                    good=false;   
+                }
+            } catch (std::exception e){
+                good=false;
+                log::out << log::RED << "Bad export size: "<<e.what()<<"\n";
+            }
+            if(good){
+                bool yes = canvas.savePng(saveLoadPath.text,0,0,depictionBorders); // Todo: saving can take time. Program will freeze.
+                if(yes)
+                    notify("Exported '"+saveLoadPath.text+"'",successColor);
+                else
+                    notify("Could not export '"+saveLoadPath.text+"'",failColor);
+            }else {
+                notify(maximumSizeText.text+" has bad format",failColor);
+            }
         }
         
         saveLoadPath.h = saveText.h-3;
@@ -441,18 +487,98 @@ void App::render(engone::LoopInfo& info) {
         saveLoadPath.font = consolas;
         saveLoadPath.rgba = {1,0.9,1,1};
         
+        sizeText.x = sw/2-sizeText.getWidth()/2;
+        sizeText.y = saveLoadPath.y +saveLoadPath.h;
+        
+        maximumSizeText.h = saveLoadPath.h;
+        maximumSizeText.x = sw/2-maximumSizeText.getWidth()/2;
+        maximumSizeText.y = sizeText.y +sizeText.h;
+        maximumSizeText.font = consolas;
+        maximumSizeText.rgba = {1,0.9,1,1};
+        
+        if(ui::Clicked(maximumSizeText)==1){
+            maximumSizeText.editing=true;
+            saveLoadPath.editing=false;   
+        }
+        if(ui::Clicked(saveLoadPath)==1){
+            saveLoadPath.editing=true;   
+            maximumSizeText.editing=false;
+        }
+        
         ui::Draw(saveLoadPath);
+        ui::Draw(maximumSizeText);
+        ui::Draw(sizeText);
         ui::Draw(saveText);
         saveLoadPath.text = oldtxt;
     }
+    
     if(promptType==PROMPT_DEPICT){
         float x=canvas.fromCanvasX(depictionX),y=canvas.fromCanvasY(depictionY),xw=canvas.fromCanvasX(depictionXW),yh=canvas.fromCanvasY(depictionYH);
-        info.window->getUIRenderer()->drawLine(x,yh,xw,yh,{1,0,0,1});
-        info.window->getUIRenderer()->drawLine(xw,yh,xw,y,{1,0,0,1});
-        info.window->getUIRenderer()->drawLine(x,y,xw,y,{1,0,0,1});
-        info.window->getUIRenderer()->drawLine(x,y,x,yh,{1,0,0,1});
+        ui::Color lineColor = {1,0,0,1};
+        info.window->getUIRenderer()->drawLine(x,yh,xw,yh,lineColor); // top
+        info.window->getUIRenderer()->drawLine(xw,yh,xw,y,lineColor); // right
+        info.window->getUIRenderer()->drawLine(x,y,xw,y,lineColor); // bottom
+        info.window->getUIRenderer()->drawLine(x,y,x,yh,lineColor); // left
         if(info.window->isKeyPressed(GLFW_KEY_ENTER)){
             switchState(PROMPT_DEPICT_SAVE);
+        }
+        
+        float range = 25;
+        float mx = canvas.toCanvasX(info.window->getMouseX());
+        float my = canvas.toCanvasY(info.window->getMouseY());
+        if(info.window->isKeyPressed(GLFW_MOUSE_BUTTON_1)){
+            if(abs(mx-depictionXW)<range&& my>depictionY-range&&my<depictionYH+range){
+                selectedEdgeX = 1;
+                selectedOffsetX = depictionXW-mx;
+            }else if(abs(mx-depictionX)<range&& my>depictionY-range&&my<depictionYH+range){
+                selectedEdgeX = - 1;
+                selectedOffsetX = depictionX-mx;
+            }
+            if(abs(my-depictionYH)<range&& mx>depictionX-range&&mx<depictionXW+range){
+                selectedEdgeY = 1;
+                selectedOffsetY = depictionYH-my;
+            }else if(abs(my-depictionY)<range&& mx>depictionX-range&&mx<depictionXW+range){
+                selectedEdgeY = - 1;
+                selectedOffsetY = depictionY-my;
+            }
+        }
+        if(info.window->isKeyReleased(GLFW_MOUSE_BUTTON_1)){
+            selectedEdgeX=0;
+            selectedEdgeY=0;
+        }
+        if(selectedEdgeX==1){
+            depictionXW = mx+selectedOffsetX;
+            if(depictionXW<depictionX){
+                selectedEdgeX=-1;
+                float tmp = depictionXW;
+                depictionXW = depictionX;
+                depictionX = tmp;   
+            }
+        }else if(selectedEdgeX==-1){
+            depictionX = mx+selectedOffsetX;
+            if(depictionX>depictionXW){
+                selectedEdgeX=1;
+                float tmp = depictionXW;
+                depictionXW = depictionX;
+                depictionX = tmp;
+            }
+        }
+        if(selectedEdgeY==1){
+            depictionYH = canvas.toCanvasY(info.window->getMouseY())+selectedOffsetY;
+            if(depictionYH<depictionY){
+                selectedEdgeY=-1;
+                float tmp = depictionYH;
+                depictionYH = depictionY;
+                depictionY = tmp;   
+            }
+        }else if(selectedEdgeY==-1){
+            depictionY = canvas.toCanvasY(info.window->getMouseY())+selectedOffsetY;
+            if(depictionY>depictionYH){
+                selectedEdgeY=1;
+                float tmp = depictionYH;
+                depictionYH = depictionY;
+                depictionY = tmp;
+            }
         }
     }
     
@@ -550,7 +676,6 @@ void App::render(engone::LoopInfo& info) {
     
     ui::Box backBox = {};
     ui::TextBox backText={"Background",0,0,25,consolas,textColor};
-    
     
     brushBox.w = brushText.getWidth()+6;
     brushBox.h = brushText.getHeight()+6;
