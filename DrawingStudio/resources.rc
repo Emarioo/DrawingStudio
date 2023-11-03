@@ -1,4 +1,4 @@
-#include    "DrawingStudio\\include\\DrwStd\\resource.h"
+#include    "include\\DrwStd\\resource.h"
 
 IDB_PNG1    PNG      "DrawingStudio\\res\\consolas42.png"
 IDB_PNG2    PNG      "DrawingStudio\\res\\colorMarker.png"

@@ -1,0 +1,2 @@
+- [ ] Error checking when reading writing files.
+- [ ] Bug with 2000 brush size, and zooming in a lot? the big particle disappears oddly? something to do with gl_PointSize in shader?

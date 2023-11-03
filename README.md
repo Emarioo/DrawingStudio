@@ -6,8 +6,8 @@ It excels at scribbling garbage on an infinite canvas.
 
 # Limits
 You draw pixels/particles and eventually you will draw to much in which case
-the program will slow down. I would recommend small zoom and high brush size.
-At the very least high brush size with high zoom.
+the program will slow down. I would recommend high brush size with low zoom.
+At the very least NOT small brush size with high zoom.
 
 # Features
 - Color picker
@@ -37,8 +37,7 @@ Microsoft Visual C++ compiler. The build.bat script can then use
 cl and link to compile and link the project.
 
 # What libraries do I use?
-Engone, GLFW, GLEW and ReactPhysics3D.
+Engone, GLFW, and GLEW.
 - Engone is a library I have made for another project (ProjectUnknown).
 - GLFW is a library for handling windows and input.
 - GLEW is a wrapper for OpenGL.
-- ReactPhysics3D isn't used but Engone requires it.
