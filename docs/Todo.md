@@ -1,5 +1,3 @@
-# In focus
-- [ ] Loading a png and converting to particles however that would be done.
 # Project things
 - [ ] Setup a configuration for release build. **Note:** Somewhat done but the libraries also needs to be compiled with release configs.
 - [ ] Fix icon for executable.
@@ -37,6 +35,7 @@
 - [ ] Enable GL_PROGRAM_POINT_SIZE and give each particle a size. Draw one large particle instead of many small ones. Enable GL_POINT_SMOOTH for rounded points (smoothing doesn't work, maybe i have old PC?).
 - [ ] Performance problems with high zoom and small brush size. Can be fixed a little bit by having multiple shaders buffers, multiple allocations instead of one large. Some multithreading on some parts? I don't think this will solve the real issue though. There will still be a limit. What you should do is set a maximum zoom. Maybe an option when launching the program do disable all limits?
 # Completed
+- [x] Loading a png and converting to particles however that would be done.
 - [x] Bake text font and marker.png into the executable. **Note:** Done with MSVC Resource compiler.
 - [x] Fix fps counter
 - [x] Save/Load text should change size depending on window size.

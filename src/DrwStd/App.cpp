@@ -221,19 +221,21 @@ int RenderThread(App* app) {
     glfwDestroyWindow(window);
     glfwTerminate();
     
-    return 0;   
+    return 0;
 }
 void UpdateApp(App* app) {
     float mx = app->inputModule.getMouseX(), my = app->inputModule.getMouseY();
     if(app->doDraw){
-        if(app->promptType==0){
-            if(app->drawType==0)
-                app->canvas.drawFromTo(app->lastmx,app->lastmy,mx,my);
-            else
-                app->canvas.eraseFromTo(app->lastmx,app->lastmy,mx,my);
+        if(app->lastmx != mx || app->lastmy != my) {
+            if(app->promptType==0){
+                if(app->drawType==0)
+                    app->canvas.drawFromTo(app->lastmx,app->lastmy,mx,my);
+                else
+                    app->canvas.eraseFromTo(app->lastmx,app->lastmy,mx,my);
+            }
+            app->lastmx = mx;
+            app->lastmy = my;
         }
-        app->lastmx = mx;
-        app->lastmy = my;
     }
     if (app->move) {
         app->canvas.offsetX += (mx - app->lastmx) / app->canvas.zoomFactor;
@@ -329,8 +331,8 @@ void RenderApp(App* app) {
         //}
     }
     
-    // glClearColor(app->canvas.backgroundColor.r,app->canvas.backgroundColor.g,app->canvas.backgroundColor.b,app->canvas.backgroundColor.a);
-    glClearColor(0.3,0.3,0.3,1.f);
+    glClearColor(app->canvas.backgroundColor.r,app->canvas.backgroundColor.g,app->canvas.backgroundColor.b,app->canvas.backgroundColor.a);
+    // glClearColor(0.3,0.3,0.3,1.f);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     
     // FontAsset* consolas = info.window->getStorage()->get<FontAsset>("default");
@@ -409,9 +411,9 @@ void RenderApp(App* app) {
     
     UILayout msgLayout = ui->makeLayout();
     msgLayout.textSize = 20;
-    msgLayout.x = sw;
-    msgLayout.y = sw;
-    msgLayout.alignment = UILayout::ALIGN_RIGHT;
+    msgLayout.x = sw/2;
+    msgLayout.y = sh-20;
+    msgLayout.alignment = UILayout::ALIGN_CENTER;
     msgLayout.flow = UILayout::FLOW_UP;
     for(int i=0;i<app->messages.size();i++) {
         auto msg = &app->messages[i];
@@ -420,13 +422,14 @@ void RenderApp(App* app) {
         if(msg->time <= 0.f) {
             app->messages.removeAt(i);
             i--;
-            continue;   
+            continue;
         }
         
         text = msgLayout.makeText(msg->text.c_str(), msg->text.length());
         text->color = msg->color;
-        if(msg->time < 0.5f)
-            text->color.a = msg->time / 0.5f;
+        const float t = 0.3f;
+        if(msg->time < t)
+            text->color.a = msg->time / t;
     }
     // if(notifyTime==notifyDelay) // saving png can take 2 seconds. if so timeStep will be 2s and notification will disappear rigth away.
     //     notifyTime-=0.001;
@@ -442,10 +445,13 @@ void RenderApp(App* app) {
         app->switchState(App::PROMPT_SAVE);
     } else if(app->inputModule.isKeyDown(GLFW_KEY_LEFT_CONTROL) && app->inputModule.isKeyPressed(GLFW_KEY_S)){
         // std::string oldtxt = saveLoadPath.text;
-        std::string pathText = app->saveLoadPath->string;
-        pathText += ".drw";
         // saveLoadPath.text = saveLoadPath.text + ".drw";
-        if(FileExist(pathText)){
+        std::string pathText = "";
+        if(app->saveLoadPath) {
+            app->saveLoadPath->string;
+            pathText += ".drw";
+        }
+        if(app->saveLoadPath && FileExist(pathText)){
             app->switchState(0); // stop prompt if it is open?
             bool yes = app->canvas.save(pathText); // Todo: saving can take time. Frame will drop.
             if(yes)
@@ -457,7 +463,9 @@ void RenderApp(App* app) {
         }
         // saveLoadPath.text = oldtxt;
     }
-    if(app->inputModule.isKeyDown(GLFW_KEY_LEFT_CONTROL) && app->inputModule.isKeyPressed(GLFW_KEY_L)){
+    if(app->inputModule.isKeyDown(GLFW_KEY_LEFT_CONTROL) && app->inputModule.isKeyDown(GLFW_KEY_LEFT_SHIFT) && app->inputModule.isKeyPressed(GLFW_KEY_L)){
+        app->switchState(App::PROMPT_LOAD_PNG);
+    } else if(app->inputModule.isKeyDown(GLFW_KEY_LEFT_CONTROL) && app->inputModule.isKeyPressed(GLFW_KEY_L)){
         app->switchState(App::PROMPT_LOAD);
     }
     if(app->inputModule.isKeyDown(GLFW_KEY_LEFT_CONTROL) && app->inputModule.isKeyPressed(GLFW_KEY_E)){
@@ -482,25 +490,25 @@ void RenderApp(App* app) {
         templen = snprintf(tempstr, sizeof(tempstr),"Export path?");
         text = promptLayout.makeText(tempstr, templen);
         
-        app->saveLoadPath = promptLayout.makeText(tempstr, templen, 930);
+        app->saveLoadPath = promptLayout.makeText(nullptr, 0, 930);
         app->saveLoadPath->h = promptHeight-3;
         app->saveLoadPath->color = {1,0.9,1,1};
         
         templen = snprintf(tempstr, sizeof(tempstr),"Maximum size (ex, 123x456 or 200)");
         text = promptLayout.makeText(tempstr, templen);
         
-        app->maximumSizeText = promptLayout.makeText(tempstr, templen, 932);
+        app->maximumSizeText = promptLayout.makeText(nullptr, 0, 932);
         app->maximumSizeText->h = promptHeight-3;
         app->maximumSizeText->color = {1,0.9,1,1};
         
         if(app->maximumSizeText->length == 0 && !app->maximumSizeText->editing) {
-            
             templen = snprintf(tempstr, sizeof(tempstr),"%dx%d",(int)app->canvas.pngMaxWidth,(int)app->canvas.pngMaxHeight);
             ui->setString(app->maximumSizeText, tempstr, templen);
         }
         
         if(app->saveLoadPath && app->saveLoadPath->length >= 4) {
             app->saveLoadPath->length -= 4;
+            app->saveLoadPath->string[app->saveLoadPath->length] = 0;
         }
         if(app->saveLoadPath->editing) {
             ui->edit(app->saveLoadPath, true);
@@ -509,7 +517,10 @@ void RenderApp(App* app) {
         if(!app->saveLoadPath) {
             ui->setString(app->saveLoadPath, ".png",4);
         } else {
-            templen = snprintf(tempstr, sizeof(tempstr),"%s%s",app->saveLoadPath->string, ".png");
+            const char* s = "";
+            if(app->saveLoadPath->string)
+                s = app->saveLoadPath->string;
+            templen = snprintf(tempstr, sizeof(tempstr),"%s%s",s, ".png");
             ui->setString(app->saveLoadPath, tempstr, templen);
         }
         
@@ -526,6 +537,10 @@ void RenderApp(App* app) {
                 app->saveLoadPath->editing=true;
             }
         }
+        // Update center alignment since ui->edit changed the width of the text
+        app->saveLoadPath->x = promptLayout.x - ui->getWidthOfText(app->saveLoadPath)/2.f;
+        app->maximumSizeText->x = promptLayout.x - ui->getWidthOfText(app->maximumSizeText)/2.f;
+        
     
         std::string path = app->saveLoadPath->string;
         
@@ -622,7 +637,7 @@ void RenderApp(App* app) {
             }
         }
         if(app->selectedEdgeY==1){
-            app->depictionYH = app->canvas.toCanvasY(my)+app->selectedOffsetY;
+            app->depictionYH =my+app->selectedOffsetY;
             if(app->depictionYH<app->depictionY){
                 app->selectedEdgeY=-1;
                 float tmp = app->depictionYH;
@@ -630,7 +645,7 @@ void RenderApp(App* app) {
                 app->depictionY = tmp;   
             }
         }else if(app->selectedEdgeY==-1){
-            app->depictionY = app->canvas.toCanvasY(my)+app->selectedOffsetY;
+            app->depictionY = my+app->selectedOffsetY;
             if(app->depictionY>app->depictionYH){
                 app->selectedEdgeY=1;
                 float tmp = app->depictionYH;
@@ -651,23 +666,31 @@ void RenderApp(App* app) {
         templen = snprintf(tempstr, sizeof(tempstr),"Save path?");
         text = promptLayout.makeText(tempstr, templen);
         
-        app->saveLoadPath = promptLayout.makeText(tempstr, templen, 930);
+        app->saveLoadPath = promptLayout.makeText(nullptr, 0, 930);
         app->saveLoadPath->h = promptHeight-3;
         app->saveLoadPath->color = {1,0.9,1,1};
         
         if(app->saveLoadPath && app->saveLoadPath->length >= 4) {
             app->saveLoadPath->length -= 4;
+            app->saveLoadPath->string[app->saveLoadPath->length] = 0;
         }
         ui->edit(app->saveLoadPath, true);
         if(!app->saveLoadPath) {
             ui->setString(app->saveLoadPath, ".drw",4);
         } else {
-            templen = snprintf(tempstr, sizeof(tempstr),"%s%s",app->saveLoadPath->string, ".drw");
+            const char* s = "";
+            if(app->saveLoadPath->string)
+                s = app->saveLoadPath->string;
+            templen = snprintf(tempstr, sizeof(tempstr),"%s%s", s, ".drw");
             ui->setString(app->saveLoadPath, tempstr, templen);
         }
+        // Update center alignment since ui->edit changed the width of the text
+        app->saveLoadPath->x = promptLayout.x - ui->getWidthOfText(app->saveLoadPath)/2.f;
         
-        std::string path = app->saveLoadPath->string;
-        if(!app->saveLoadPath->editing) {
+        std::string path = "";
+        if(app->saveLoadPath && app->saveLoadPath->string)
+            path = app->saveLoadPath->string;
+        if(app->saveLoadPath && !app->saveLoadPath->editing) {
             app->switchState(0);
             bool yes = app->canvas.save(path); // Todo: saving can take time. Frame will drop.
             if(yes)
@@ -687,12 +710,13 @@ void RenderApp(App* app) {
         templen = snprintf(tempstr, sizeof(tempstr),"Load path?");
         text = promptLayout.makeText(tempstr, templen);
         
-        app->saveLoadPath = promptLayout.makeText(tempstr, templen, 930);
+        app->saveLoadPath = promptLayout.makeText(nullptr, 0, 930);
         app->saveLoadPath->h = promptHeight-3;
         app->saveLoadPath->color = {1,0.9,1,1};
         
         if(app->saveLoadPath && app->saveLoadPath->length >= 4) {
             app->saveLoadPath->length -= 4;
+            app->saveLoadPath->string[app->saveLoadPath->length] = 0;
         }
         ui->edit(app->saveLoadPath, true);
         if(!app->saveLoadPath) {
@@ -706,6 +730,43 @@ void RenderApp(App* app) {
         if(!app->saveLoadPath->editing) {
             app->switchState(0);
             bool yes = app->canvas.load(path); // Todo: saving can take time. Frame will drop.
+            if(yes)
+                app->notify("Loaded '"+path+"'",app->successColor);
+            else
+                app->notify("Could not load '"+path+"'",app->failColor);
+        }
+    }
+    if(app->promptType==App::PROMPT_LOAD_PNG){
+        UILayout promptLayout = ui->makeLayout();
+        promptLayout.x = sw/2.f;
+        promptLayout.y = sh/3.f;
+        promptLayout.alignment = UILayout::ALIGN_CENTER;
+        promptLayout.textSize = promptHeight;
+        promptLayout.textColor = app->promptColor;
+        
+        templen = snprintf(tempstr, sizeof(tempstr),"Load png path?");
+        text = promptLayout.makeText(tempstr, templen);
+        
+        app->saveLoadPath = promptLayout.makeText(nullptr, 0, 930);
+        app->saveLoadPath->h = promptHeight-3;
+        app->saveLoadPath->color = {1,0.9,1,1};
+        
+        if(app->saveLoadPath && app->saveLoadPath->length >= 4) {
+            app->saveLoadPath->length -= 4;
+            app->saveLoadPath->string[app->saveLoadPath->length] = 0;
+        }
+        ui->edit(app->saveLoadPath, true);
+        if(!app->saveLoadPath) {
+            ui->setString(app->saveLoadPath, ".png",4);
+        } else {
+            templen = snprintf(tempstr, sizeof(tempstr),"%s%s",app->saveLoadPath->string, ".png");
+            ui->setString(app->saveLoadPath, tempstr, templen);
+        }
+        
+        std::string path = app->saveLoadPath->string;
+        if(!app->saveLoadPath->editing) {
+            app->switchState(0);
+            bool yes = app->canvas.loadPng(path); // Todo: saving can take time. Frame will drop.
             if(yes)
                 app->notify("Loaded '"+path+"'",app->successColor);
             else
@@ -755,32 +816,33 @@ void RenderApp(App* app) {
     layout.textColor = app->textColor;
     
     layout.x = 0;
-    layout.y = sh/2.f;
+    layout.y = hueY - 2 * (25 + 6);
     
-    UIBox* box = nullptr;
+    // UIBox* box = nullptr;
     
     UIBox* brushBox = layout.makeBox(0,0);
     UIText* brushText = layout.makeText("Brush");
-    box->w = ui->getWidthOfText(text) + 6;
-    box->h = text->h + 6;
+    brushBox->w = ui->getWidthOfText(brushText) + 6;
+    brushBox->h = brushText->h + 6;
     
     UIBox* backBox = layout.makeBox(0,0);
     UIText* backText = layout.makeText("Background");
-    box->w = ui->getWidthOfText(text) + 6;
-    box->h = text->h + 6;
+    backBox->w = ui->getWidthOfText(backText) + 6;
+    backBox->h = brushText->h + 6;
     
     backBox->x = 0;
     brushBox->x = 0;
     if(app->pickColorType==App::PICK_COLOR_BACKGROUND){
-        backBox->y = hueY-backText->h-6;
+        backBox->y = hueY-backBox->h;
         brushBox->y = backBox->y - backBox->h;
     }else {
-        brushBox->y = hueY-brushText->h-6;
+        brushBox->y = hueY-brushBox->h;
         backBox->y = brushBox->y - brushBox->h;
     }
-    
     backText->x = backBox->x + 3;
     brushText->x = brushBox->x + 3;
+    backText->y = backBox->y + 0;
+    brushText->y = brushBox->y + 0;
     
     brushBox->color = boxColor;
     backBox->color = boxColor;
@@ -866,7 +928,7 @@ void RenderApp(App* app) {
         }  
     }
     if(app->inputModule.isKeyReleased(GLFW_MOUSE_BUTTON_3)){
-        app->move=false;   
+        app->move=false;
     }
     if(app->promptType==-1)
         app->promptType=0;
@@ -882,6 +944,10 @@ void App::notify(const std::string& text, engone::UIColor color){
 }
 void App::switchState(int state){
     promptType = state;
+    if(!saveLoadPath) {
+        saveLoadPath = uiModule.makeText(930);
+        maximumSizeText = uiModule.makeText(932);
+    }
     saveLoadPath->editing=true;
     selectedEdgeX=0;
     selectedEdgeY=0;

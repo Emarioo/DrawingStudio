@@ -90,7 +90,7 @@ void UIModule::edit(UIText* text, bool stopEditWithEnter) {
             if (length > 0 && text->cursorIndex > 0) {
                 // ad|adw, 2
                 // a|adw, 1
-                strncpy(text->string + text->cursorIndex - 1, text->string + text->cursorIndex, text->length - text->cursorIndex);
+                memcpy(text->string + text->cursorIndex - 1, text->string + text->cursorIndex, text->length - text->cursorIndex);
                 text->length--;
                 
                 // text->text = text->text.substr(0, text->cursorIndex - 1) + text->text.substr(text->cursorIndex);
@@ -112,8 +112,9 @@ void UIModule::edit(UIText* text, bool stopEditWithEnter) {
                 }
                 // ad|adw, 2
                 // ad0|adw, 1
-                strncpy(text->string + text->cursorIndex + 1, text->string + text->cursorIndex, text->length - text->cursorIndex);
+                memcpy(text->string + text->cursorIndex + 1, text->string + text->cursorIndex, text->length - text->cursorIndex);
                 text->string[text->cursorIndex] = '\n';
+                text->string[text->cursorIndex+1] = '\0';
                 text->length++;
                 // text->text.insert(text->text.begin() + text->cursorIndex, '\n');
                 text->cursorIndex++;
@@ -122,7 +123,7 @@ void UIModule::edit(UIText* text, bool stopEditWithEnter) {
             if ((int)text->length > text->cursorIndex) {
                 // ad|adw, 2
                 // ad|dw, 2
-                strncpy(text->string + text->cursorIndex, text->string + text->cursorIndex + 1, text->length - text->cursorIndex - 1);
+                memcpy(text->string + text->cursorIndex, text->string + text->cursorIndex + 1, text->length - text->cursorIndex - 1);
                 text->length--;
                 
                 // text->text = text->text.substr(0, text->cursorIndex) + text->text.substr(text->cursorIndex + 1);
@@ -145,12 +146,15 @@ void UIModule::edit(UIText* text, bool stopEditWithEnter) {
             }
             // ad|adw, 2
             // ad0|adw, 1
-            strncpy(text->string + text->cursorIndex + 1, text->string + text->cursorIndex, text->length - text->cursorIndex);
+            if(text->length - text->cursorIndex > 0)
+                memcpy(text->string + text->cursorIndex + 1, text->string + text->cursorIndex, text->length - text->cursorIndex);
             text->string[text->cursorIndex] = chr;
+            text->string[text->cursorIndex+1] = 0;
             text->length++;
             // text->text.insert(text->text.begin() + text->cursorIndex, chr);
             text->cursorIndex++;
         }
+        text->string[text->length] = 0;
     }
 }
 bool UIModule::clicked(UIBox* box, int mouseKey) {
@@ -629,7 +633,8 @@ void UIModule::setString(UIText* text, const char* string, int length) {
         if(!newString)
             return;
         text->string = newString;
-        strncpy(text->string, string, length+1);
+        memcpy(text->string, string, length+1);
+        text->string[length] = '\0';
         text->length = length;
         text->str_max = length + 1;
     } else {
@@ -644,14 +649,16 @@ void UIModule::setString(UIText* text, const char* string, int length) {
             if(length == 0)
                 length = strlen(string);
             if(text->string && text->str_max >= length + 1) {
-                strncpy(text->string, string, length);
+                memcpy(text->string, string, length);
+                text->string[length] = '\0';
                 text->length = length;
             } else {
                 char* newString = (char*)maintainedStringAllocator.allocate(length + 1, text->string, text->str_max);
                 if(!newString)
                     return;
                 text->string = newString;
-                strncpy(text->string, string, length);
+                memcpy(text->string, string, length);
+                text->string[length] = '\0';
                 text->length = length;
                 text->str_max = length + 1;
             }
@@ -1073,7 +1080,8 @@ UIText* UILayout::makeText(const char* str, int length, u64 id) {
     
     UIText* text = ui->makeText(id);
     text->color = textColor;
-    ui->setString(text, str, length);
+    if(str)
+        ui->setString(text, str, length);
     text->h = textSize;
     switch(flow) {
         case FLOW_DOWN: {

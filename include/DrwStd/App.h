@@ -81,11 +81,8 @@ struct App {
         PROMPT_LOAD=2,
         PROMPT_DEPICT=3,
         PROMPT_DEPICT_SAVE=4,
+        PROMPT_LOAD_PNG=5,
     };
-    // static const int PROMPT_SAVE=1;
-    // static const int PROMPT_LOAD=2;
-    // static const int PROMPT_DEPICT=3;
-    // static const int PROMPT_DEPICT_SAVE=4;
     static const int SELECT_HUE=5;
     static const int SELECT_FADE=6;
     static const int SELECT_ALPHA=7;

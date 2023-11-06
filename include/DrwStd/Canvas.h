@@ -53,6 +53,7 @@ public:
     bool save(const std::string& path);
     bool savePng(const std::string& path, int pixelWidth, int pixelHeight, float borders[4]);
     bool load(const std::string& path);
+    bool loadPng(const std::string& path);
     
     void clear();
     
@@ -62,8 +63,8 @@ public:
     Color brushColor={0.5,1,0,1};
     void setBrushColor(Color color);
     
-    Color backgroundColor={1.,1.,1.,1};
-    // Color backgroundColor={0,0.03,0.08,1};
+    // Color backgroundColor={1.,1.,1.,1};
+    Color backgroundColor={0,0.03,0.08,1};
     void setBackgroundColor(Color color);
     
     // Will remove overlapping particles. Your history will also be deleted.

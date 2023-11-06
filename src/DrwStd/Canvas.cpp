@@ -10,6 +10,7 @@ static const char* markerGLSL = {
 };
 
 #include "stb/stb_image_write.h"
+#include "stb/stb_image.h"
 
 #include "DrwStd/App.h"
 
@@ -333,6 +334,75 @@ bool Canvas::load(const std::string& path){
     }else{
         return false;   
     }
+}
+bool Canvas::loadPng(const std::string& path) {   
+    using namespace engone;
+    struct RGBA {
+        u8 r,g,b,a;
+    };
+    
+    int w,h,channels;
+    u8* data = stbi_load(path.c_str(), &w, &h, &channels, 4);
+    if(!data)
+        return false;
+    
+    // background color = most common color
+    int mostCommon_color = 0;
+    int mostCommon_freq = 0;
+    std::unordered_map<int,int> colorFrequency;
+    for(int i=0;i<w*h;i++) {
+        int color = *((int*)data + i);
+        auto& pair = colorFrequency.find(color);
+        if(pair != colorFrequency.end()) {
+            pair->second++;
+        } else {
+            colorFrequency[color] = 1;
+        }
+    }
+    for(auto& pair : colorFrequency) {
+        if(mostCommon_freq < pair.second) {
+            mostCommon_color = pair.first;
+            mostCommon_freq = pair.second;   
+        }
+    }
+    
+    RGBA* color = (RGBA*)&mostCommon_color;
+    backgroundColor = {color->r / 255.f, color->g / 255.f, color->b / 255.f, color->a / 255.f};
+    
+    // get particles from the data
+    u64 newParticles = w*h+100;// plus some extra to delay the next reallocation
+    if(maxParticles<newParticles){
+        Particle* data = (Particle*)engone::Reallocate(particles,maxParticles*sizeof(Particle),newParticles*sizeof(Particle));
+        if(!data){
+            stbi_image_free(data);
+            return false;
+        }
+        particles = data;
+        maxParticles = newParticles;
+    }
+    
+    // TODO: Each pixel (except for backround color) generates a particle. We can improve this by combining close particles into a larger one.
+    //  How would the algorithm work?
+    particleCount = 0;
+    for(int i=0;i<w*h;i++) {
+        int color_int = *((int*)data + i);
+        if(color_int == mostCommon_color)
+            continue;
+        RGBA* color = ((RGBA*)data + i);
+        int x = i % w, y = i / w;
+        
+        Particle* p = &particles[particleCount++];
+        p->color = {color->r / 255.f, color->g / 255.f, color->b / 255.f, color->a / 255.f};
+        p->s = 1.04f; // .04 because of random gaps between particles
+        p->x = x;
+        p->y = y;
+    }
+    
+    needsRefresh = true;
+    countHistory.clear();
+    countHistory.push_back(particleCount);
+    stbi_image_free(data);
+    return true;
 }
 void Canvas::setBrushSize(float size){
     brushSize = size;   
