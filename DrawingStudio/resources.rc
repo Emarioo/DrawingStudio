@@ -1,4 +1,5 @@
 #include    "include\\DrwStd\\resource.h"
 
+IDI_ICON1   ICON     "DrawingStudio\\res\\favicon.ico"
 IDB_PNG1    PNG      "DrawingStudio\\res\\consolas42.png"
 IDB_PNG2    PNG      "DrawingStudio\\res\\colorMarker.png"

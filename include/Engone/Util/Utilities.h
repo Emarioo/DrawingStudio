@@ -8,7 +8,7 @@
 #include "Engone/Util/FileWriter.h"
 #include "Engone/Util/TimeUtility.h"
 #include "Engone/Util/RandomUtility.h"
-#include "Engone/Util/ImageUtility.h"
+// #include "Engone/Util/ImageUtility.h"
 // #include "Engone/Utilities/Alloc.h"
 
 #include "Engone/PlatformLayer.h"

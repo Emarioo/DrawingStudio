@@ -12,7 +12,6 @@
 #include <vector>
 
 namespace engone {
-	#pragma once
 
 	namespace log {
 		enum Color : u8 {

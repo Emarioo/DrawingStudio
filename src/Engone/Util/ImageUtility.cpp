@@ -9,13 +9,7 @@
 #include "Engone/util/Tracker.h"
 
 namespace engone {
-	template<>
-	ICO* Image::Convert<PNG,ICO>(PNG* img) {
-		log::out << "Image::Convert - PNG to ICO is not implemented\n";
-		return nullptr;
-	}
-	template<>
-	RawImage* Image::Convert < BMP,RawImage > (BMP* img) {
+	RawImage* BMPToRaw(BMP* img) {
 		if (!img) return nullptr;
 		if (!img->m_data) return nullptr;
 
@@ -41,11 +35,10 @@ namespace engone {
 			out->m_data[p * 4 + 3] = imgData[i * 4 + 3];
 		}
 
-		out->m_flags = OwnerSelf;
+		out->m_flags = Image::OwnerSelf;
 		return out;
 	}
-	template<>
-	BMP* Image::Convert<RawImage,BMP>(RawImage* img) {
+	BMP* RawToBMP(RawImage* img) {
 		if (!img) return nullptr;
 		if (!img->m_data) return nullptr;
 
@@ -60,7 +53,7 @@ namespace engone {
 		BMP* out = TRACK_ALLOC(BMP);
 		new(out)BMP();
 		out->m_data = newData;
-		out->m_flags = OwnerSelf;
+		out->m_flags = Image::OwnerSelf;
 		out->m_size = total;
 		memset(out->m_data, 0, sizeof(BITMAPINFOHEADER));
 		if (andMaskSize != 0)
@@ -124,8 +117,8 @@ namespace engone {
 		out->m_flags = Image::StripInternal(img->m_flags) | Image::OwnerStbi;
 		return out;
 	}
-	template<>
-	ICO* Image::Convert<BMP, ICO>(BMP* img) {
+    
+	ICO* BMPToICO(BMP* img) {
 		if (!img) return nullptr;
 		if (!img->data()) return nullptr;
 
@@ -142,8 +135,7 @@ namespace engone {
 		memcpy_s(out->getData(0),e->imageSize,img->data(),img->m_size);
 		return out;
 	}
-	template<>
-	BMP* Image::Convert<ICO, BMP>(ICO* img) {
+	BMP* ICOToBMP(ICO* img) {
 		if (!img) return nullptr;
 		if (!img->data()) return nullptr;
 		if (img->header()->numImages == 0) return nullptr;
@@ -158,11 +150,23 @@ namespace engone {
 		BMP* out = TRACK_ALLOC(BMP);
 		new(out)BMP();
 		out->m_data = newData;
-		out->m_flags = OwnerSelf;
+		out->m_flags = Image::OwnerSelf;
 		out->m_size = size;
 
 		memcpy_s(out->m_data, size, img->getData(0), size);
 		return out;
+	}
+	RawImage* ICOToRaw(ICO* img) {
+        BMP* bmp = ICOToBMP(img);
+        RawImage* raw = BMPToRaw(bmp);
+		return raw;
+    }
+	ICO* PNGToICO(PNG* img) {
+        RawImage* raw = PNGToRawImage(img);
+        BMP* bmp = RawToBMP(raw);
+        ICO* ico = BMPToICO(bmp);
+		// log::out << "Image::Convert - PNG to ICO is not implemented\n";
+		return ico;
 	}
 	template<typename T>
 	T* Image::ReadFile(const char* path) {

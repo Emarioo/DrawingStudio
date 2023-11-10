@@ -65,6 +65,7 @@ struct App {
     static const int PICK_COLOR_BACKGROUND=1;
     int pickColorType=PICK_COLOR_BRUSH;
 
+    bool showHelp = false;
     
     union {
         float depictionBorders[4]{0};

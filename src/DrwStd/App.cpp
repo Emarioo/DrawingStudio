@@ -44,6 +44,14 @@ int RenderThread(App* app) {
         glfwTerminate();
         return 0;
     }
+    
+    // TODO: Fix memory leak
+    // ICO* ico = ICO::Load(IDI_ICON1); // this fails, not sure why
+    // if(ico){
+    //     RawImage* raw = ICOToRaw(ico);
+    //     GLFWimage tmp = {raw->width,raw->height,(uint8_t*)raw->data()};
+    //     glfwSetWindowIcon(window,1,&tmp);
+    // }
  
     glfwMakeContextCurrent(window);
     glewInit();
@@ -329,6 +337,9 @@ void RenderApp(App* app) {
         //    winCoords[3] = mainWindow->getHeight();
         //    mainWindow->maximize();
         //}
+    }
+    if(app->inputModule.isKeyPressed(GLFW_KEY_H)) {
+        app->showHelp = !app->showHelp;
     }
     
     glClearColor(app->canvas.backgroundColor.r,app->canvas.backgroundColor.g,app->canvas.backgroundColor.b,app->canvas.backgroundColor.a);
@@ -932,7 +943,30 @@ void RenderApp(App* app) {
     }
     if(app->promptType==-1)
         app->promptType=0;
+
+    if(app->showHelp) {
+        UILayout layout = ui->makeLayout();
+        layout.x = sw/2;
+        layout.y = sh/2;
+        layout.textSize = 20;
+        layout.alignment = UILayout::ALIGN_CENTER;
         
+        // layout.makeBox(0,0);
+        UIText* text = nullptr;
+        text = layout.makeText("Ctrl + E - Export png");
+        text = layout.makeText("Ctrl + L - Load drw  ");
+        text = layout.makeText("Ctrl + Shift + S - Save drw");
+        text = layout.makeText("Ctrl + Shift + L - Load png");
+        text = layout.makeText("Ctrl + Shift + N - Clear");
+        text = layout.makeText("Ctrl + Z/R - Undo/Redo");
+        
+    }
+    text = ui->makeText();
+    text->h = 20;
+    ui->setString(text, "H - help");
+    text->x = sw - ui->getWidthOfText(text);
+    text->y = sh - text->h;
+    text->color = {1,1,1,1};
     // #endif
 }
 void App::notify(const std::string& text, engone::UIColor color){

@@ -96,6 +96,10 @@ namespace engone {
 
 	};
 	RawImage* PNGToRawImage(PNG* img);
+	ICO* PNGToICO(PNG* img);
+	BMP* RawToBMP(RawImage* img);
+	ICO* BMPToICO(BMP* img);
+	RawImage* ICOToRaw(ICO* img);
 	// mainly used for ICO.
 	// BITMAPINFOHEADER is the start. There are others.
 	// BMP format from wikipedia

@@ -60,7 +60,7 @@ public:
     float brushSize=3;
     void setBrushSize(float size);
     
-    Color brushColor={0.5,1,0,1};
+    Color brushColor={1,1,1,1};
     void setBrushColor(Color color);
     
     // Color backgroundColor={1.,1.,1.,1};
