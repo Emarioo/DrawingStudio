@@ -140,6 +140,9 @@ int RenderThread(App* app) {
         double frame_deltaTime = DiffMeasure(now - lastTime);
         lastTime = now;
         app->current_frameTime = frame_deltaTime;
+        if(app->current_frameTime > 1/30.f) {
+            app->current_frameTime = 1/30.f;
+        }
         
         app->avg_frameTime.addSample(frame_deltaTime);
 
@@ -288,12 +291,32 @@ void UpdateApp(App* app) {
             app->canvas.setBrushSize(size);
         }
     }
+    
+    while(true) {
+        std::string path = app->inputModule.pollPathDrop();
+        if(path.empty()) break;
+        int dot_index = path.find_last_of(".");
+        if(path.find_last_of(".png")) {
+            bool yes = app->canvas.loadPng(path);
+            if(yes)
+                app->notify("Loaded '"+path+"'",app->successColor);
+            else
+                app->notify("Could not load '"+path+"'",app->failColor);
+        } else {
+            if(dot_index == -1) {
+                app->notify("Path drop for '"+path+"' not supported for (unknown format)",app->failColor);
+            } else {
+                app->notify("Path drop for '"+path.substr(dot_index)+"' formats is not supported",app->failColor);
+            }
+        }
+    }
+    
 }
 void RenderApp(App* app) {
     using namespace engone;
     app->undoRedoTime-= app->current_frameTime;
     if(app->undoRedoTime<0){
-        app->undoRedoTime = 0;   
+        app->undoRedoTime = 0;
     }
     if(app->inputModule.isKeyDown(GLFW_KEY_LEFT_CONTROL) && app->inputModule.isKeyDown(GLFW_KEY_Z)){
         if(app->undoRedoTime==0){
@@ -1124,38 +1147,39 @@ void App::renderHue(float x, float y, float w, float h){
         }
     }
     
+    const float floatMin=0.0001; // 1.0 is converted to 0.0. The markers will jump to some default position
+    const float floatMax=0.9999; // 1.0 is converted to 0.0. The marker will jump to the left side.
     if (promptType==SELECT_FADE) {
-        const float floatMin=0.001; // 1.0 is converted to 0.0. The markers will jump to some default position
         saturation = 1-(mx - fadeX) / (fadeW);
         value = 1-(my - fadeY) / (fadeH);
-        if (saturation < floatMin)
-            saturation = floatMin;
-        if (saturation > 1) {
-            saturation = 1;
-        }
-        if (value < floatMin)
-            value = floatMin;
-        if (value > 1) {
-            value = 1;
-        }
+    }
+    if (saturation < floatMin)
+        saturation = floatMin;
+    if (saturation > floatMax) {
+        saturation = floatMax;
+    }
+    if (value < floatMin)
+        value = floatMin;
+    if (value > floatMax) {
+        value = floatMax;
     }
     if (promptType==SELECT_HUE) {
         hue = (mx - hueX) / (hueW);
-        if (hue < 0)
-            hue = 0;
-        const float hueMax=0.999; // 1.0 is converted to 0.0. The marker will jump to the left side.
-        if (hue > hueMax) {
-            hue = hueMax;
-        }
+    }
+    if (hue < 0)
+        hue = 0;
+    if (hue > 1) {
+        hue = 1;
     }
     if (promptType==SELECT_ALPHA) {
         alpha = (mx - alphaX) / (alphaW);
-        if (alpha < 0)
-            alpha = 0;
-        if (alpha > 1) {
-            alpha = 1;
-        }
     }
+    if (alpha < 0)
+        alpha = 0;
+    if (alpha > 1) {
+        alpha = 1;
+    }
+    // printf("%f %f %f\n", hue, saturation, alpha);
     HSVToRGB(hsvColor, rgbColor);
     
     if(pickColorType==PICK_COLOR_BRUSH){

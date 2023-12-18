@@ -36,6 +36,9 @@ namespace engone {
 		
 		// void enableFirstPerson(bool yes);
 		// bool isFirstPerson() const { return m_enabledFirstPerson; }
+        
+        std::string pollClipboard();
+        void setClipboard(const std::string& str);
 
 		// If true, the cursor will be made visible.
 		void setCursorVisible(bool visible);

@@ -75,13 +75,31 @@ void UIModule::edit(UIText* text, bool stopEditWithEnter) {
     if (text->cursorIndex < 0 || text->cursorIndex > length)
         text->cursorIndex = length;
     
+    // handle path drop?
+    
     uint32_t chr = 0;
     if (input->isKeyDown(GLFW_KEY_LEFT_CONTROL) && input->isKeyPressed(GLFW_KEY_V)) {
-        Assert(false);
-        // std::string tmp = PollClipboard();
-        // //str.insert(str.begin() + at, tmp);
-        // text->text.insert(text->cursorIndex, tmp);
-        // text->cursorIndex += (int)tmp.length();
+        // Assert(false);
+        std::string tmp = input->pollClipboard();
+        
+         if(text->str_max - 1 < text->length + tmp.size()) {
+            int newMax = text->length + tmp.size() + 10 + 1;
+            char* s = (char*)maintainedStringAllocator.allocate(newMax, text->string, text->str_max);
+            Assert(s);
+            if(!s)
+                return; // error
+            text->string = s;
+            text->str_max = newMax;
+        }
+        
+        if(text->length < text->cursorIndex)
+            memcpy(text->string + text->cursorIndex + tmp.length(), text->string + text->cursorIndex, text->length - text->cursorIndex);
+        memcpy(text->string + text->cursorIndex, tmp.c_str(), tmp.length());
+        
+        text->length+=tmp.length();
+        text->cursorIndex+=tmp.length();
+        
+        text->string[text->length] = 0;
         return;
     }
     while (chr = input->pollChar()) {
@@ -136,7 +154,7 @@ void UIModule::edit(UIText* text, bool stopEditWithEnter) {
                 text->cursorIndex++;
         } else {
             if(text->str_max-1 < text->length + 1) {
-                int newMax = text->length + 1 + 1 + 10;
+                int newMax = text->length + 1 + 10 + 1;
                 char* s = (char*)maintainedStringAllocator.allocate(newMax, text->string, text->str_max);
                 Assert(s);
                 if(!s)
@@ -146,10 +164,10 @@ void UIModule::edit(UIText* text, bool stopEditWithEnter) {
             }
             // ad|adw, 2
             // ad0|adw, 1
-            if(text->length - text->cursorIndex > 0)
+            if(text->length < text->cursorIndex)
                 memcpy(text->string + text->cursorIndex + 1, text->string + text->cursorIndex, text->length - text->cursorIndex);
             text->string[text->cursorIndex] = chr;
-            text->string[text->cursorIndex+1] = 0;
+            // text->string[text->cursorIndex+1] = 0;
             text->length++;
             // text->text.insert(text->text.begin() + text->cursorIndex, chr);
             text->cursorIndex++;

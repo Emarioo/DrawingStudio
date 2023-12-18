@@ -10,7 +10,6 @@
 #include "Engone/Asserts.h"
 #include "Engone/Util/Array.h"
 
-struct AppState;
 typedef void (*AppProcedure)(App* app);
 struct App {
     App() {}
@@ -83,10 +82,11 @@ struct App {
         PROMPT_DEPICT=3,
         PROMPT_DEPICT_SAVE=4,
         PROMPT_LOAD_PNG=5,
+        
+        SELECT_HUE=10,
+        SELECT_FADE=11,
+        SELECT_ALPHA=12,
     };
-    static const int SELECT_HUE=5;
-    static const int SELECT_FADE=6;
-    static const int SELECT_ALPHA=7;
     void switchState(int state);
     int promptType=0;
     

@@ -444,7 +444,7 @@ namespace engone {
 		// glfwSetWindowCloseCallback(window, CloseCallback);
 		// glfwSetWindowPosCallback(window, PosCallback);
 		glfwSetCharCallback(window, CharCallback);
-		// glfwSetDropCallback(window, DropCallback);
+		glfwSetDropCallback(window, DropCallback);
 	}
 	void InputModule::setCursorVisible(bool visible) {
 		m_cursorVisible = visible;
@@ -471,4 +471,11 @@ namespace engone {
 			glfwSetInputMode(m_glfwWindow, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
 		}
 	}
+    
+    std::string InputModule::pollClipboard() {
+        return glfwGetClipboardString(m_glfwWindow);
+    }
+    void InputModule::setClipboard(const std::string& str) {
+        glfwSetClipboardString(m_glfwWindow,str.c_str());
+    }
 }

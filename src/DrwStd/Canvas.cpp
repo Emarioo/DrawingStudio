@@ -342,7 +342,9 @@ bool Canvas::loadPng(const std::string& path) {
     };
     
     int w,h,channels;
+    stbi_set_flip_vertically_on_load(true);
     u8* data = stbi_load(path.c_str(), &w, &h, &channels, 4);
+    stbi_set_flip_vertically_on_load(false);
     if(!data)
         return false;
     

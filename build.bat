@@ -1,7 +1,7 @@
 @echo off
 @setlocal enabledelayedexpansion
 
-@REM set WITH_CONSOLE=1
+set WITH_CONSOLE=1
 
 SET COMPILE_OPTIONS=/std:c++17 /EHsc /TP /MTd /nologo /Zi
 SET LINK_OPTIONS=/NOLOGO /INCREMENTAL:NO /IGNORE:4006 /IGNORE:4098 /DEBUG /IGNORE:4006 /ignore:4099 Advapi32.lib gdi32.lib shell32.lib user32.lib OpenGL32.lib
@@ -10,7 +10,7 @@ SET DEFINITIONS=/DOS_WINDOWS /FI pch.h /DGLEW_STATIC
 
 SET LINK_OPTIONS=!LINK_OPTIONS! /DEBUG libs/glfw-3.3.8/lib/glfw3_mt.lib libs/glew-2.1.0/lib/glew32s.lib
 
-if WITH_CONSOLE==1 (
+if !WITH_CONSOLE!==1 (
     SET LINK_OPTIONS=!LINK_OPTIONS! /SUBSYSTEM:CONSOLE
 ) else (
     SET LINK_OPTIONS=!LINK_OPTIONS! /SUBSYSTEM:WINDOWS

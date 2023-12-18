@@ -16,7 +16,6 @@ void run(){
     // ico->writeFile("DrawingStudio/res/favicon.ico");
     
     // TODO: Support command line arguments?
-    
     StartApp();
 }
 

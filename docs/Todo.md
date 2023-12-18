@@ -1,3 +1,6 @@
+# Urgent
+- Copy/paste when loading, saving images. It currently crashes
+- Pngs are loaded upside down?
 # Project things
 - [ ] Setup a configuration for release build. **Note:** Somewhat done but the libraries also needs to be compiled with release configs.
 - [ ] Fix icon for executable.
@@ -5,6 +8,7 @@
 - [ ] Transparent window. Drawing ontop of a text editor is cool. Or a game.
 - [ ] Organize todos before they get out of hand. Organize by importance or category? Maybe both?
 # Quality of life
+- [ ] Copy/paste when loading, saving images. It currently crashes
 - [ ] Exponential undo, redo speed when holding key.
 - [ ] Help information
 - [ ] Origin point or cross showing the center of the canvas.
