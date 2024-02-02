@@ -18,6 +18,7 @@
 - [ ] Some limit or standardization for zoom and size. If you balance them incorrectly your canvas will drop performance. This is not something you should have to think about. Perhaps size can be 1/10 of the zoom at minimum.
 - [ ] Option to automatically create an image when saving to the `.drw` format.
 # Special features
+- [ ] Split view with two panels (or more) that allows you to see and draw on two places on the canvas without moving back and forth. **THIS IS HUGE, PLEASE IMPLEMENT NOW**
 - [ ] Area select and move. Move pixels/particles. Rectangle selection? Implementation could specify ranges of particles to select and move instead of a list of all particles within the area.
 - [ ] Grid generation. As a programmer you usually use grids when explaining certain things. Not having to draw the grid every time would be convenient.
 - [ ] Drawing rectangles

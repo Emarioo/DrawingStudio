@@ -1,7 +1,7 @@
 @echo off
 @setlocal enabledelayedexpansion
 
-set WITH_CONSOLE=1
+@REM set WITH_CONSOLE=1
 
 SET COMPILE_OPTIONS=/std:c++17 /EHsc /TP /MTd /nologo /Zi
 SET LINK_OPTIONS=/NOLOGO /INCREMENTAL:NO /IGNORE:4006 /IGNORE:4098 /DEBUG /IGNORE:4006 /ignore:4099 Advapi32.lib gdi32.lib shell32.lib user32.lib OpenGL32.lib
